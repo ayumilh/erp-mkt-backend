@@ -1,6 +1,5 @@
 const dotenv = require("dotenv");
 dotenv.config(); // Configuração automática do .env
-
 const { Pool } = require('pg'); // Importa o PostgreSQL
 
 // Conexão com o PostgreSQL
