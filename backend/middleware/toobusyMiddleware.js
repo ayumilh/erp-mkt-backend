@@ -1,6 +1,6 @@
 const toobusy = require('toobusy-js');
 
-toobusy.maxLag(1000)
+toobusy.maxLag(2000)
 
 const toobusyMiddleware = (req, res, next) => {
   if (toobusy()) {
