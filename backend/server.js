@@ -10,6 +10,7 @@ const cron = require('./utils/refresh.js'); // Importando o arquivo com a fun√ß√
 const toobusyMiddleware = require('./middleware/toobusyMiddleware.js');
 const rateLimit = require('./middleware/rateLimiter.js');
 
+app.set('trust proxy', 1)
 app.use(helmet());
 app.use(rateLimit);
 app.use(bodyParser.json());
