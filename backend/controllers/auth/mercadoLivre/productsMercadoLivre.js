@@ -186,7 +186,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 date_created: tokenData.date_created,
                 last_updated: tokenData.last_updated,
                 available_quantity: tokenData.available_quantity,
-                gtin
+                gtin,
+                marca
             };
 
             // Check if the product already exists
@@ -208,8 +209,9 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         date_created = $7,
                         last_updated = $8,
                         available_quantity = $9,
-                        gtin = $10
-                    WHERE product_sku = $11 AND userid = $12
+                        marca = $10,
+                        gtin = $11
+                    WHERE product_sku = $12 AND userid = $13
                     RETURNING *;  -- Optional: returns updated record
                 `;
 
@@ -217,7 +219,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.title, productDetails.price, productDetails.status,
                     productDetails.pictureUrls, productDetails.color, productDetails.diameter,
                     productDetails.date_created, productDetails.last_updated,
-                    productDetails.available_quantity, productDetails.sku, productDetails.gtin,
+                    productDetails.available_quantity, productDetails.sku, productDetails.marca, productDetails.gtin,
                     userid
                 ];
 
@@ -228,8 +230,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     INSERT INTO productsMercado (
                         product_sku, title, price, status,
                         pictureUrls, color, diameter, userid,
-                        date_created, last_updated, available_quantity, gtin
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                        date_created, last_updated, available_quantity, marca, gtin
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                     RETURNING *;  -- Optional: returns inserted record
                 `;
 
@@ -238,7 +240,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.status, productDetails.pictureUrls, productDetails.color,
                     productDetails.diameter, userid,
                     productDetails.date_created, productDetails.last_updated,
-                    productDetails.available_quantity, productDetails.gtin
+                    productDetails.available_quantity, productDetails.marca, productDetails.gtin
                 ];
 
                 await pool.query(insertQuery, insertValues);
