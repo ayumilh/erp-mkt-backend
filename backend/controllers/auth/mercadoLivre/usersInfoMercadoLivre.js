@@ -4,7 +4,7 @@ const { startOfDay, endOfDay, formatISO } = require('date-fns');
 
 const validaToken = async (userid) => {
 
-    const result = await pool.query(`SELECT access_token FROM usermercadolivre WHERE userid = ${userid}`);
+    const result = await pool.query(`SELECT access_token FROM usermercado WHERE userid = ${userid}`);
 
     if (result.rows.length > 0) {
         const accessToken = result.rows[0].access_token;
@@ -16,7 +16,7 @@ const validaToken = async (userid) => {
 
 const validaIdUserMercado = async (userid) => {
 
-    const result = await pool.query(`SELECT user_mercado_id FROM usermercadolivre WHERE userid = ${userid}`);
+    const result = await pool.query(`SELECT user_mercado_id FROM usermercado WHERE userid = ${userid}`);
 
     if (result.rows.length > 0) {
         const user_mercado_ids = result.rows.map(row => row.user_mercado_id);

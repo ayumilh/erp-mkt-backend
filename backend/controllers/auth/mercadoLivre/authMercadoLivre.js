@@ -70,7 +70,7 @@ exports.mercadoLivreAuth = async (req, res) => {
         const access_token = tokenData.access_token;
         console.log(`'User id Mercado Livre:' ${user_mercado_id} Refresh Token: ${refresh_token} Access Token: ${access_token}`);
 
-        // Inserir o refresh_token na tabela userMercadoLivre junto com o ID do usuário
+        // Inserir o refresh_token na tabela usermercado junto com o ID do usuário
         await pool.query(
             'INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) VALUES ($1, $2, $3, $4, $5)',
             [nome_mercado, refresh_token, userid, access_token, user_mercado_id]

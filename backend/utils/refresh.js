@@ -10,8 +10,8 @@ const clientSecret_magalu = process.env.CLIENT_SECRET_MAGALU;
 //REFRESH TOKEN MERCADO LIVRE
 async function atualizarRefreshTokenMercadoLivre() {
     try {
-        // Buscar todos os registros da tabela usermercadolivre
-        const queryResult = await pool.query('SELECT user_mercado_id, refresh_token, access_token FROM usermercadolivre');
+        // Buscar todos os registros da tabela usermercado
+        const queryResult = await pool.query('SELECT user_mercado_id, refresh_token, access_token FROM usermercado');
 
         // Iterar sobre os resultados e atualizar cada refresh token
         for (const row of queryResult.rows) {
@@ -37,7 +37,7 @@ async function atualizarRefreshTokenMercadoLivre() {
                 const updatedAccessToken = responseData.access_token;
 
                 // Atualizar o refresh token no banco de dados
-                await pool.query('UPDATE usermercadolivre SET refresh_token = $1, access_token = $2 WHERE user_mercado_id = $3', [updatedRefreshToken, updatedAccessToken, row.user_mercado_id]);
+                await pool.query('UPDATE usermercado SET refresh_token = $1, access_token = $2 WHERE user_mercado_id = $3', [updatedRefreshToken, updatedAccessToken, row.user_mercado_id]);
                 console.log('Refresh Token Atualizado Mercado Livre >>', updatedRefreshToken + ' Access Token:', updatedAccessToken)
             } else {
                 const errorData = await response.json(); // Tenta extrair informações do corpo da resposta
@@ -59,7 +59,7 @@ async function atualizarRefreshTokenMercadoLivre() {
 
 async function atualizarRefreshTokenMagalu() {
     try {
-        // Buscar todos os registros da tabela usermercadolivre
+        // Buscar todos os registros da tabela usermagalu
         const queryResult = await pool.query('SELECT user_magalu_id, access_token, refresh_token FROM usermagalu');
 
         // Iterar sobre os resultados e atualizar cada refresh token
