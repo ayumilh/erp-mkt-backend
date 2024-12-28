@@ -150,11 +150,15 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const status = tokenData.status;
             const sku = tokenData.id;
             const pictureUrls = tokenData.pictures[0]?.url || "N/A";
+
+            // verificar se o produto tem GTIN
             const gtinAttribute = tokenData.attributes.find(attr => attr.id === "GTIN");
             const gtin = gtinAttribute ? gtinAttribute.value_name : "N/A";
-
-            console.log("Attributes:", tokenData.attributes);
             console.log("gtin:", gtin);
+
+            const marca = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "N/A";
+
+            console.log("Marca:", marca);
 
             let color = "N/A";
             if (tokenData.variations && tokenData.variations.length > 0) {
