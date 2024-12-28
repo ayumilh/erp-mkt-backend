@@ -141,6 +141,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             return response.json();
         }));
 
+        console.log("Products:", products);
+
         // Process each product
         for (const tokenData of products) {
             const title = tokenData.title;
@@ -148,7 +150,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const status = tokenData.status;
             const sku = tokenData.id;
             const pictureUrls = tokenData.pictures[0]?.url || "N/A";
-            const gtin = tokenData.attributes.find(attr => attr.id === "GTIN")?.value_name || "N/A";
+            const gtinAttribute = tokenData.attributes.find(attr => attr.id === "GTIN" || attr.id === "EAN" || attr.id === "UPC");
+            const gtin = gtinAttribute ? gtinAttribute.value_name : "N/A";
 
             console.log("GTin:", gtin);
 
