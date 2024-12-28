@@ -28,9 +28,6 @@ exports.mercadoLivreAuth = async (req, res) => {
     try {
         //recebendo code do front end
         const { code, nome_loja: nome_mercado, userId: userid } = req.body;
-        console.log('TOKEN:', code);
-        console.log('NOME:', nome_mercado);
-        console.log('USERID:', userid);
 
         if (!code || !nome_mercado || !userid) {
             const missingParams = [];

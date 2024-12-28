@@ -150,6 +150,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const pictureUrls = tokenData.pictures[0]?.url || "N/A";
             const gtin = tokenData.attributes.find(attr => attr.id === "GTIN")?.value_name || "N/A";
 
+            console.log("GTin:", gtin);
+
             let color = "N/A";
             if (tokenData.variations && tokenData.variations.length > 0) {
                 color = tokenData.variations[0].attribute_combinations.find(attr => attr.id === "COLOR")?.value_name || "N/A";
