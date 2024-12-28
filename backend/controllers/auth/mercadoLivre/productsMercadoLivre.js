@@ -150,15 +150,20 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const status = tokenData.status;
             const sku = tokenData.id;
             const pictureUrls = tokenData.pictures[0]?.url || "N/A";
+            const quantity = tokenData.available_quantity;
+            const listing = tokenData.listing_type_id;
+            const condition = tokenData.condition;
+            const description = tokenData.description?.plain_text || "N/A";
+            const video_id = tokenData.video_id || "N/A";
+            const garantia = tokenData.warranty?.type || "N/A";
+            const tempo_garantia = tokenData.warranty?.time || "N/A";
+            const marca = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "N/A";
 
             // verificar se o produto tem GTIN
             const gtinAttribute = tokenData.attributes.find(attr => attr.id === "GTIN");
             const gtin = gtinAttribute ? gtinAttribute.value_name : "N/A";
             console.log("gtin:", gtin);
 
-            const marca = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "N/A";
-
-            console.log("Marca:", marca);
 
             let color = "N/A";
             if (tokenData.variations && tokenData.variations.length > 0) {
@@ -185,9 +190,15 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 diameter: diameterValue,
                 date_created: tokenData.date_created,
                 last_updated: tokenData.last_updated,
-                available_quantity: tokenData.available_quantity,
-                gtin,
-                marca
+                available_quantity: quantity,
+                listing,
+                condition,
+                description,
+                video_id,
+                garantia,
+                tempo_garantia,
+                marca,
+                gtin
             };
 
             // Check if the product already exists
@@ -209,9 +220,15 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         date_created = $7,
                         last_updated = $8,
                         available_quantity = $9,
-                        marca = $10,
-                        gtin = $11
-                    WHERE product_sku = $12 AND userid = $13
+                        listing = $10,
+                        condition = $11,
+                        description = $12,
+                        video_id = $13,
+                        garantia = $14,
+                        tempo_garantia = $15,
+                        marca = $16,
+                        gtin = $17
+                    WHERE product_sku = $18 AND userid = $19
                     RETURNING *;  -- Optional: returns updated record
                 `;
 
@@ -219,8 +236,10 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.title, productDetails.price, productDetails.status,
                     productDetails.pictureUrls, productDetails.color, productDetails.diameter,
                     productDetails.date_created, productDetails.last_updated,
-                    productDetails.available_quantity, productDetails.sku, productDetails.marca, productDetails.gtin,
-                    userid
+                    productDetails.available_quantity, productDetails.listing, productDetails.condition,
+                    productDetails.description, productDetails.video_id, productDetails.garantia,
+                    productDetails.tempo_garantia, productDetails.marca, productDetails.gtin,
+                    productDetails.sku, userid
                 ];
 
                 await pool.query(updateQuery, updateValues);
@@ -231,7 +250,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         product_sku, title, price, status,
                         pictureUrls, color, diameter, userid,
                         date_created, last_updated, available_quantity, marca, gtin
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
                     RETURNING *;  -- Optional: returns inserted record
                 `;
 
@@ -240,7 +259,9 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.status, productDetails.pictureUrls, productDetails.color,
                     productDetails.diameter, userid,
                     productDetails.date_created, productDetails.last_updated,
-                    productDetails.available_quantity, productDetails.marca, productDetails.gtin
+                    productDetails.available_quantity, productDetails.listing, productDetails.condition,
+                    productDetails.description, productDetails.video_id, productDetails.garantia,
+                    productDetails.tempo_garantia, productDetails.marca, productDetails.gtin
                 ];
 
                 await pool.query(insertQuery, insertValues);
