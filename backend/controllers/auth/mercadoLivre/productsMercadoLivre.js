@@ -150,9 +150,9 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const status = tokenData.status;
             const sku = tokenData.id;
             const pictureUrls = tokenData.pictures[0]?.url || "N/A";
-            const quantity = tokenData.available_quantity;
-            const listing = tokenData.listing_type_id;
-            const condition = tokenData.condition;
+            const quantity = tokenData.available_quantity || "N/A";
+            const listing = tokenData.listing_type_id || "N/A";
+            const condition = tokenData.condition || "N/A";
             const description = tokenData.description?.plain_text || "N/A";
             const video_id = tokenData.video_id || "N/A";
             const garantia = tokenData.warranty?.type || "N/A";
@@ -249,7 +249,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     INSERT INTO productsMercado (
                         product_sku, title, price, status,
                         pictureUrls, color, diameter, userid,
-                        date_created, last_updated, available_quantity, marca, gtin
+                        date_created, last_updated, available_quantity, listing, condition,
+                        description, video_id, garantia, tempo_garantia, marca, gtin
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
                     RETURNING *;  -- Optional: returns inserted record
                 `;
