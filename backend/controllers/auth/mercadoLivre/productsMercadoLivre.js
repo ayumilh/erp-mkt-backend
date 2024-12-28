@@ -251,7 +251,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         pictureUrls, color, diameter, userid,
                         date_created, last_updated, available_quantity, listing, condition,
                         description, video_id, garantia, tempo_garantia, marca, gtin
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
                     RETURNING *;  -- Optional: returns inserted record
                 `;
 
