@@ -27,12 +27,21 @@ exports.redirectToMercadoLivreAuth = async (req, res) => {
 exports.mercadoLivreAuth = async (req, res) => {
     try {
         //recebendo code do front end
-        const nome_mercado = req.body.nome_loja;
-        const code = req.body.code;
+        const { code, nome_loja: nome_mercado, userId: userid } = req.body;
         console.log('TOKEN:', code);
+        console.log('NOME:', nome_mercado);
+        console.log('USERID:', userid);
 
-        const userid = req.body.userId;
-        console.log(userid);
+        if (!code || !nome_mercado || !userid) {
+            const missingParams = [];
+            if (!code) missingParams.push('code');
+            if (!nome_mercado) missingParams.push('nome_loja');
+            if (!userid) missingParams.push('userId');
+            return res.status(400).json({ 
+                message: `Parâmetros ausentes: ${missingParams.join(', ')}`,
+                received: {code, nome_mercado, userid}
+            });
+        }
 
         //estou mandando a Body do Passo 1 após pegar o URL CODE TOKEN do cliente ao autenticar-se
         const requestBodyPasso2 = `grant_type=authorization_code&client_id=${clientId}&client_secret=${clientSecret}&code=${code}&redirect_uri=${redirectUri}&code_verifier=$CODE_VERIFIER`;
