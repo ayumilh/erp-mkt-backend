@@ -132,7 +132,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             if (!response.ok) {
                 const errorData = await response.json();
                 let errorMessage = 'Erro na solicitação do token';
-                if (errorData && errorData.error_description) { 
+                if (errorData && errorData.error_description) {
                     errorMessage = errorData.error_description;
                 }
                 throw new Error(errorMessage);
@@ -148,7 +148,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const status = tokenData.status;
             const sku = tokenData.id;
             const pictureUrls = tokenData.pictures[0]?.url || "N/A";
-            
+            const gtin = tokenData.attributes.find(attr => attr.id === "GTIN")?.value_name || "N/A";
+
             let color = "N/A";
             if (tokenData.variations && tokenData.variations.length > 0) {
                 color = tokenData.variations[0].attribute_combinations.find(attr => attr.id === "COLOR")?.value_name || "N/A";
@@ -174,12 +175,13 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 diameter: diameterValue,
                 date_created: tokenData.date_created,
                 last_updated: tokenData.last_updated,
-                available_quantity: tokenData.available_quantity
+                available_quantity: tokenData.available_quantity,
+                gtin
             };
 
             // Check if the product already exists
             const existingProduct = await pool.query(
-                'SELECT * FROM productsMercado WHERE product_sku = $1 AND userid = $2', 
+                'SELECT * FROM productsMercado WHERE product_sku = $1 AND userid = $2',
                 [productDetails.sku, userid]
             );
 
@@ -195,8 +197,9 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         diameter = $6,
                         date_created = $7,
                         last_updated = $8,
-                        available_quantity = $9
-                    WHERE product_sku = $10 AND userid = $11
+                        available_quantity = $9,
+                        gtin = $10
+                    WHERE product_sku = $11 AND userid = $12
                     RETURNING *;  -- Optional: returns updated record
                 `;
 
@@ -204,8 +207,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.title, productDetails.price, productDetails.status,
                     productDetails.pictureUrls, productDetails.color, productDetails.diameter,
                     productDetails.date_created, productDetails.last_updated,
-                    productDetails.available_quantity,
-                    productDetails.sku, userid
+                    productDetails.available_quantity, productDetails.sku, productDetails.gtin,
+                    userid
                 ];
 
                 await pool.query(updateQuery, updateValues);
@@ -215,8 +218,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     INSERT INTO productsMercado (
                         product_sku, title, price, status,
                         pictureUrls, color, diameter, userid,
-                        date_created, last_updated, available_quantity
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                        date_created, last_updated, available_quantity, gtin
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                     RETURNING *;  -- Optional: returns inserted record
                 `;
 
@@ -225,7 +228,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.status, productDetails.pictureUrls, productDetails.color,
                     productDetails.diameter, userid,
                     productDetails.date_created, productDetails.last_updated,
-                    productDetails.available_quantity
+                    productDetails.available_quantity, productDetails.gtin
                 ];
 
                 await pool.query(insertQuery, insertValues);
@@ -259,17 +262,17 @@ const mercadoLivreGetIdProduct = async (req, res) => {
     try {
         const userid = req.query.userId;
         const product_sku = req.query.sku;
-    
+
         if (!userid) {
             return res.status(400).json({ message: 'User ID não fornecido.' });
         }
-    
+
         if (!product_sku) {
             return res.status(400).json({ message: 'SKU do produto não fornecido.' });
         }
-    
+
         const productsMercado = await pool.query('SELECT * FROM productsMercado WHERE product_sku = $2 AND userid = $1', [userid, product_sku]);
-    
+
         res.status(200).json({ products: productsMercado.rows });
     } catch (error) {
         console.error('Erro:', error);
@@ -361,55 +364,55 @@ const uploadImageToCloudinary = async (fileBuffer) => {
 const mercadoLivreCreateProducts = async (req, res) => {
     try {
 
-           // Log para verificar o conteúdo da requisição
-           console.log("Request Body:", req.body);
-           console.log("Request File:", req.file);
-   
-           const {
-               title,
-               price,
-               quantity,
-               listing,
-               condition,
-               description,
-               video_id,
-               garantia,
-               tempo_garantia,
-               marca,
-               gtin,
-               userId
-           } = req.body;
-   
-           if (!userId) {
-               return res.status(400).json({ message: "User ID is required" });
-           }
-   
-           const access_token = await validaToken(userId);
-   
-           // Faz o upload da imagem no Cloudinary se o arquivo estiver presente
-           let imageUrl = null;
-           if (req.file && req.file.buffer) {
-               imageUrl = await uploadImageToCloudinary(req.file.buffer);
-           }
-   
-           // Parâmetros para o JSON de criação do produto
-           const createBody = {
-               title,
-               price,
-               quantity,
-               listing,
-               condition,
-               description,
-               video_id,
-               garantia,
-               tempo_garantia,
-               pictures: imageUrl, // URL da imagem do Cloudinary
-               marca,
-               gtin,
-           };
+        // Log para verificar o conteúdo da requisição
+        console.log("Request Body:", req.body);
+        console.log("Request File:", req.file);
 
-           console.log(createBody)
-           
+        const {
+            title,
+            price,
+            quantity,
+            listing,
+            condition,
+            description,
+            video_id,
+            garantia,
+            tempo_garantia,
+            marca,
+            gtin,
+            userId
+        } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        const access_token = await validaToken(userId);
+
+        // Faz o upload da imagem no Cloudinary se o arquivo estiver presente
+        let imageUrl = null;
+        if (req.file && req.file.buffer) {
+            imageUrl = await uploadImageToCloudinary(req.file.buffer);
+        }
+
+        // Parâmetros para o JSON de criação do produto
+        const createBody = {
+            title,
+            price,
+            quantity,
+            listing,
+            condition,
+            description,
+            video_id,
+            garantia,
+            tempo_garantia,
+            pictures: imageUrl, // URL da imagem do Cloudinary
+            marca,
+            gtin,
+        };
+
+        console.log(createBody)
+
         // Obtendo a categoria com base no título
         const responseCat = await fetch(`https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=${createBody.title}`, {
             headers: {
