@@ -15,7 +15,7 @@ const stockSchema = Joi.object({
   Custo_de_Compra: Joi.string().pattern(/^\d+(\.\d{1,2})?$/).allow('').optional(),
   Descricao: Joi.string().allow('').optional(),
   Link_do_Fornecedor: Joi.string().uri().max(255).allow('').optional(),
-  Marca: Joi.string().max(100).allow('').optional(),
+  Brand: Joi.string().max(100).allow('').optional(),
   Tamanho: Joi.string().max(50).allow('').optional(),
   Peso_do_Pacote: Joi.string().pattern(/^\d+(\.\d{1,2})?$/).allow('').optional(),
   Tamanho_de_Embalagem: Joi.string().max(50).allow('').optional(),
@@ -43,7 +43,7 @@ const stockVariantSchema = Joi.object({
   Custo_de_Compra: Joi.string().pattern(/^\d+(\.\d{1,2})?$/).allow('').optional(),
   Descricao: Joi.string().allow('').optional(),
   Link_do_Fornecedor: Joi.string().uri().max(255).allow('').optional(),
-  Marca: Joi.string().max(100).allow('').optional(),
+  Brand: Joi.string().max(100).allow('').optional(),
   Tamanho: Joi.string().max(50).allow('').optional(),
   Cor: Joi.string().max(50).allow('').optional(),
   Adicionar: Joi.string().max(255).allow('').optional(),
@@ -93,11 +93,11 @@ const productStock = async (req, res) => {
     // Insere o produto no banco de dados
     const result = await pool.query(
       `INSERT INTO stock (SKU, Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda,
-        Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Marca, Peso_do_Pacote, Tamanho_de_Embalagem,
+        Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem,
         Link_do_Video, NCM, CEST, Unidade, Origem, quantidade, skuMercado, userid)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`,
       [body.SKU, body.Nome_do_Produto, body.Apelido_do_Produto, body.Categorias, body.Codigo_de_Barras, body.Data_de_Lancamento, statusVenda,
-      body.Vendedor, body.Preco_de_Varejo, body.Custo_de_Compra, body.Descricao, body.Link_do_Fornecedor, body.Marca, body.Peso_do_Pacote, body.Tamanho_de_Embalagem,
+      body.Vendedor, body.Preco_de_Varejo, body.Custo_de_Compra, body.Descricao, body.Link_do_Fornecedor, body.Brand, body.Peso_do_Pacote, body.Tamanho_de_Embalagem,
       body.Link_do_Video, body.NCM, body.CEST, body.Unidade, body.Origem, quantidade, skuMercado, userid]
     );
 
@@ -140,7 +140,7 @@ const editProductStock = async (req, res) => {
         Custo_de_Compra = $9,
         Descricao = $10, 
         Link_do_Fornecedor = $11, 
-        Marca = $12, 
+        Brand = $12, 
         Peso_do_Pacote = $13, 
         Tamanho_de_Embalagem = $14,
         Link_do_Video = $15, 
@@ -152,7 +152,7 @@ const editProductStock = async (req, res) => {
       WHERE SKU = $21 AND userid = $22`,
       [body.Nome_do_Produto, body.Apelido_do_Produto, body.Categorias, body.Codigo_de_Barras, body.Data_de_Lancamento,
       body.Status_da_Venda, body.Vendedor, body.Preco_de_Varejo, body.Custo_de_Compra, body.Descricao, body.Link_do_Fornecedor,
-      body.Marca, body.Peso_do_Pacote, body.Tamanho_de_Embalagem, body.Link_do_Video, body.NCM, body.CEST, body.Unidade,
+      body.Brand, body.Peso_do_Pacote, body.Tamanho_de_Embalagem, body.Link_do_Video, body.NCM, body.CEST, body.Unidade,
       body.Origem, body.quantidade, SKU, userid]
     );
 
@@ -221,11 +221,11 @@ const insertNewProduct = async (product, userid) => {
   try {
     const result = await pool.query(
       `INSERT INTO stockVariant (SKU, Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda,
-              Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Marca, Peso_do_Pacote, Tamanho_de_Embalagem,
+              Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem,
               Link_do_Video, NCM, CEST, Unidade, Origem, Tamanho, Cor, Adicionar, userid)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
       [product.SKU, product.Nome_do_Produto, product.Apelido_do_Produto, product.Categorias, product.Codigo_de_Barras, product.Data_de_Lancamento, product.Status_da_Venda,
-      product.Vendedor, product.Preco_de_Varejo, product.Custo_de_Compra, product.Descricao, product.Link_do_Fornecedor, product.Marca, product.Peso_do_Pacote, product.Tamanho_de_Embalagem,
+      product.Vendedor, product.Preco_de_Varejo, product.Custo_de_Compra, product.Descricao, product.Link_do_Fornecedor, product.Brand, product.Peso_do_Pacote, product.Tamanho_de_Embalagem,
       product.Link_do_Video, product.NCM, product.CEST, product.Unidade, product.Origem, product.Tamanho, product.Cor, product.Adicionar, userid]
     );
 
@@ -315,11 +315,11 @@ const getProductStock = async (req, res) => {
 // // Rota para atualizar um item no estoque
 // app.put('/estoque/:SKU', async (req, res) => {
 //   const { SKU } = req.params;
-//   const { Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda, Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Marca, Peso_do_Pacote, Tamanho_de_Embalagem, Link_do_Video, NCM, CEST, Unidade, Origem } = req.body;
+//   const { Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda, Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem, Link_do_Video, NCM, CEST, Unidade, Origem } = req.body;
 
 //   try {
-//     const result = await pool.query('UPDATE Estoque SET Nome_do_Produto = $1, Apelido_do_Produto = $2, Categorias = $3, Codigo_de_Barras = $4, Data_de_Lancamento = $5, Status_da_Venda = $6, Vendedor = $7, Preco_de_Varejo = $8, Custo_de_Compra = $9, Descricao = $10, Link_do_Fornecedor = $11, Marca = $12, Peso_do_Pacote = $13, Tamanho_de_Embalagem = $14, Link_do_Video = $15, NCM = $16, CEST = $17, Unidade = $18, Origem = $19 WHERE SKU = $20',
-//       [Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda, Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Marca, Peso_do_Pacote, Tamanho_de_Embalagem, Link_do_Video, NCM, CEST, Unidade, Origem, SKU]);
+//     const result = await pool.query('UPDATE Estoque SET Nome_do_Produto = $1, Apelido_do_Produto = $2, Categorias = $3, Codigo_de_Barras = $4, Data_de_Lancamento = $5, Status_da_Venda = $6, Vendedor = $7, Preco_de_Varejo = $8, Custo_de_Compra = $9, Descricao = $10, Link_do_Fornecedor = $11, Brand = $12, Peso_do_Pacote = $13, Tamanho_de_Embalagem = $14, Link_do_Video = $15, NCM = $16, CEST = $17, Unidade = $18, Origem = $19 WHERE SKU = $20',
+//       [Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda, Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem, Link_do_Video, NCM, CEST, Unidade, Origem, SKU]);
 
 //     res.send('Item do estoque atualizado.');
 //   } catch (error) {

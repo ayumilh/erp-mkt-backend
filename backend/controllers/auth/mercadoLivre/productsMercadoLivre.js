@@ -157,7 +157,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const video_id = tokenData.video_id || "";
             const garantia = tokenData.warranty?.type || "";
             const tempo_garantia = tokenData.warranty?.time || "";
-            const marca = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
+            const brand = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
 
             // verificar se o produto tem GTIN
             const gtinAttribute = tokenData.variations && tokenData.variations.length > 0 && tokenData.variations[0].attributes ? tokenData.variations[0].attributes.find(attribute => attribute.id === "GTIN") : null;
@@ -196,7 +196,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 video_id,
                 garantia,
                 tempo_garantia,
-                marca,
+                brand,
                 gtin
             };
 
@@ -225,7 +225,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         video_id = $13,
                         garantia = $14,
                         tempo_garantia = $15,
-                        marca = $16,
+                        brand = $16,
                         gtin = $17
                     WHERE product_sku = $18 AND userid = $19
                     RETURNING *;  -- Optional: returns updated record
@@ -237,7 +237,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.date_created, productDetails.last_updated,
                     productDetails.available_quantity, productDetails.listing, productDetails.condition,
                     productDetails.description, productDetails.video_id, productDetails.garantia,
-                    productDetails.tempo_garantia, productDetails.marca, productDetails.gtin,
+                    productDetails.tempo_garantia, productDetails.brand, productDetails.gtin,
                     productDetails.sku, userid
                 ];
 
@@ -249,7 +249,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         product_sku, title, price, status,
                         pictureUrls, color, diameter, userid,
                         date_created, last_updated, available_quantity, listing, condition,
-                        description, video_id, garantia, tempo_garantia, marca, gtin
+                        description, video_id, garantia, tempo_garantia, brand, gtin
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
                     RETURNING *;  -- Optional: returns inserted record
                 `;
@@ -261,7 +261,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.date_created, productDetails.last_updated,
                     productDetails.available_quantity, productDetails.listing, productDetails.condition,
                     productDetails.description, productDetails.video_id, productDetails.garantia,
-                    productDetails.tempo_garantia, productDetails.marca, productDetails.gtin
+                    productDetails.tempo_garantia, productDetails.brand, productDetails.gtin
                 ];
 
                 await pool.query(insertQuery, insertValues);
@@ -411,7 +411,7 @@ const mercadoLivreCreateProducts = async (req, res) => {
             video_id,
             garantia,
             tempo_garantia,
-            marca,
+            brand,
             gtin,
             userId
         } = req.body;
@@ -440,7 +440,7 @@ const mercadoLivreCreateProducts = async (req, res) => {
             garantia,
             tempo_garantia,
             pictures: imageUrl, // URL da imagem do Cloudinary
-            marca,
+            brand,
             gtin,
         };
 
@@ -497,7 +497,7 @@ const mercadoLivreCreateProducts = async (req, res) => {
             "attributes": [
                 {
                     "id": "BRAND",
-                    "value_name": createBody.marca
+                    "value_name": createBody.brand
                 },
                 {
                     "id": "GTIN",
