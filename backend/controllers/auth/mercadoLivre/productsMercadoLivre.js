@@ -121,7 +121,6 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 
         console.log("Access token:", access_token);
         console.log("User ID:", userid);
-        console.log("Product IDs:", idProduct);
 
         // Fetch product details concurrently
         const products = await Promise.all(idProduct.map(async (productId) => {
@@ -155,8 +154,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const condition = tokenData.condition || "";
             const description = tokenData.description?.plain_text || "";
             const video_id = tokenData.video_id || "";
-            const garantia = tokenData.warranty || "";
-            const tempo_garantia = tokenData.warranty?.time || "";
+            const warrantyString = tokenData.warranty || "";
+            const [garantia, tempo_garantia] = warrantyString.split(':').map(str => str.trim());
             const brand = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
 
             // verificar se o produto tem GTIN
