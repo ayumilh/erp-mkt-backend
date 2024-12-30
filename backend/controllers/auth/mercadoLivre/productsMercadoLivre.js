@@ -177,13 +177,19 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 }
             }
 
+            // Upload image to Cloudinary
+            let cloudinaryImageUrl = "N/A";
+            if (pictureUrls !== "N/A") {
+                cloudinaryImageUrl = await uploadImageToCloudinary(pictureUrls);
+            }
+
             // Prepare product details object
             const productDetails = {
                 sku,
                 title,
                 price,
                 status,
-                pictureUrls,
+                pictureUrls: cloudinaryImageUrl,
                 color,
                 diameter: diameterValue,
                 date_created: tokenData.date_created,
