@@ -390,6 +390,7 @@ const uploadImageToCloudinary = async (fileBuffer) => {
         });
         uploadStream.end(fileBuffer);
     });
+
 };
 
 //POST CREATE PRODUCTS
@@ -426,6 +427,8 @@ const mercadoLivreCreateProducts = async (req, res) => {
         if (req.file && req.file.buffer) {
             imageUrl = await uploadImageToCloudinary(req.file.buffer);
         }
+
+        console.log("Image URL:", imageUrl);
 
         // Parâmetros para o JSON de criação do produto
         const createBody = {
@@ -490,7 +493,7 @@ const mercadoLivreCreateProducts = async (req, res) => {
             ],
             "pictures": [
                 {
-                    "source": createBody.pictures // URL da imagem no Cloudinary
+                    "source": createBody.imageUrl // URL da imagem no Cloudinary
                 }
             ],
             "attributes": [
@@ -556,7 +559,7 @@ const mercadoLivreUpdateProducts = async (req, res) => {
             // video_id: req.body.video_id,
             warrantyType: req.body.warrantyType,
             warrantyTemp: req.body.warrantyTemp,
-            // pictures: req.body.pictures,
+            // pictures: req.body.imageUrl,
             brand: req.body.brand,
             gtin: req.body.gtin,
 
