@@ -155,7 +155,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const condition = tokenData.condition || "";
             const description = tokenData.description?.plain_text || "";
             const video_id = tokenData.video_id || "";
-            const garantia = tokenData.warranty?.type || tokenData.warranty || "";
+            const garantia = tokenData.warranty || "";
             const tempo_garantia = tokenData.warranty?.time || "";
             const brand = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
 
