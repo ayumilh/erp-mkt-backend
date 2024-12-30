@@ -149,21 +149,20 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const price = tokenData.price;
             const status = tokenData.status;
             const sku = tokenData.id;
-            const pictureUrls = tokenData.pictures[0]?.url || "N/A";
-            const quantity = tokenData.available_quantity || "N/A";
-            const listing = tokenData.listing_type_id || "N/A";
-            const condition = tokenData.condition || "N/A";
-            const description = tokenData.description?.plain_text || "N/A";
-            const video_id = tokenData.video_id || "N/A";
-            const garantia = tokenData.warranty?.type || "N/A";
-            const tempo_garantia = tokenData.warranty?.time || "N/A";
-            const marca = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "N/A";
+            const pictureUrls = tokenData.pictures[0]?.url || "";
+            const quantity = tokenData.available_quantity || "";
+            const listing = tokenData.listing_type_id || "";
+            const condition = tokenData.condition;
+            const description = tokenData.description?.plain_text || "";
+            const video_id = tokenData.video_id || "";
+            const garantia = tokenData.warranty?.type || "";
+            const tempo_garantia = tokenData.warranty?.time || "";
+            const marca = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
 
             // verificar se o produto tem GTIN
-            const gtinAttribute = tokenData.attributes.find(attr => attr.id === "GTIN");
-            const gtin = gtinAttribute ? gtinAttribute.value_name : "N/A";
-            console.log("gtin:", gtin);
-
+            const gtinAttribute = tokenData.variations[0].attributes.find(attribute => attribute.id === "GTIN");
+            const gtin = gtinAttribute ? gtinAttribute.value_name : '';
+            console.log("GTIN:", gtin);
 
             let color = "N/A";
             if (tokenData.variations && tokenData.variations.length > 0) {
