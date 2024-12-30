@@ -160,7 +160,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const marca = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
 
             // verificar se o produto tem GTIN
-            const gtinAttribute = tokenData.variations[0].attributes.find(attribute => attribute.id === "GTIN");
+            const gtinAttribute = tokenData.variations.attributes.find(attribute => attribute.id === "GTIN");
             const gtin = gtinAttribute ? gtinAttribute.value_name : '';
             console.log("GTIN:", gtin);
 
