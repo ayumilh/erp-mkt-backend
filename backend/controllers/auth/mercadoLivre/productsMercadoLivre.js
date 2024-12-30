@@ -155,7 +155,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const description = tokenData.description?.plain_text || "";
             const video_id = tokenData.video_id || "";
             const warrantyString = tokenData.warranty || "";
-            const [garantia, tempo_garantia] = warrantyString.split(':').map(str => str.trim());
+            const [warrantyType, warrantyTemp] = warrantyString.split(':').map(str => str.trim());
             const brand = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
 
             // verificar se o produto tem GTIN
@@ -193,8 +193,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 condition,
                 description,
                 video_id,
-                garantia,
-                tempo_garantia,
+                warrantyType,
+                warrantyTemp,
                 brand,
                 gtin
             };
@@ -222,8 +222,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         condition = $11,
                         description = $12,
                         video_id = $13,
-                        garantia = $14,
-                        tempo_garantia = $15,
+                        warrantyType = $14,
+                        warrantyTemp = $15,
                         brand = $16,
                         gtin = $17
                     WHERE product_sku = $18 AND userid = $19
@@ -235,8 +235,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.pictureUrls, productDetails.color, productDetails.diameter,
                     productDetails.date_created, productDetails.last_updated,
                     productDetails.available_quantity, productDetails.listing, productDetails.condition,
-                    productDetails.description, productDetails.video_id, productDetails.garantia,
-                    productDetails.tempo_garantia, productDetails.brand, productDetails.gtin,
+                    productDetails.description, productDetails.video_id, productDetails.warrantyType,
+                    productDetails.warrantyTemp, productDetails.brand, productDetails.gtin,
                     productDetails.sku, userid
                 ];
 
@@ -248,7 +248,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                         product_sku, title, price, status,
                         pictureUrls, color, diameter, userid,
                         date_created, last_updated, available_quantity, listing, condition,
-                        description, video_id, garantia, tempo_garantia, brand, gtin
+                        description, video_id, warrantyType, warrantyTemp, brand, gtin
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
                     RETURNING *;  -- Optional: returns inserted record
                 `;
@@ -259,8 +259,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                     productDetails.diameter, userid,
                     productDetails.date_created, productDetails.last_updated,
                     productDetails.available_quantity, productDetails.listing, productDetails.condition,
-                    productDetails.description, productDetails.video_id, productDetails.garantia,
-                    productDetails.tempo_garantia, productDetails.brand, productDetails.gtin
+                    productDetails.description, productDetails.video_id, productDetails.warrantyType,
+                    productDetails.warrantyTemp, productDetails.brand, productDetails.gtin
                 ];
 
                 await pool.query(insertQuery, insertValues);
@@ -408,8 +408,8 @@ const mercadoLivreCreateProducts = async (req, res) => {
             condition,
             description,
             video_id,
-            garantia,
-            tempo_garantia,
+            warrantyType,
+            warrantyTemp,
             brand,
             gtin,
             userId
@@ -436,8 +436,8 @@ const mercadoLivreCreateProducts = async (req, res) => {
             condition,
             description,
             video_id,
-            garantia,
-            tempo_garantia,
+            warrantyType,
+            warrantyTemp,
             pictures: imageUrl, // URL da imagem do Cloudinary
             brand,
             gtin,
@@ -481,11 +481,11 @@ const mercadoLivreCreateProducts = async (req, res) => {
             "sale_terms": [
                 {
                     "id": "WARRANTY_TYPE",
-                    "value_name": createBody.garantia
+                    "value_name": createBody.warrantyType
                 },
                 {
                     "id": "WARRANTY_TIME",
-                    "value_name": createBody.tempo_garantia
+                    "value_name": createBody.warrantyTemp
                 }
             ],
             "pictures": [
