@@ -152,7 +152,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const pictureUrls = tokenData.pictures[0]?.url || "N/A";
             const quantity = tokenData.available_quantity || "";
             const listing = tokenData.listing_type_id || "";
-            const condition = tokenData.condition;
+            const condition = tokenData.condition || "";
             const description = tokenData.description?.plain_text || "";
             const video_id = tokenData.video_id || "";
             const garantia = tokenData.warranty?.type || "";
