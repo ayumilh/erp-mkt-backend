@@ -284,14 +284,9 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 //Get All Produtos no Banco
 const mercadoLivreGetProducts = async (req, res) => {
     try {
-        const {userid, product_sku, title} = req.query;
+        const {userid, title} = req.query;
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
-
-        if (product_sku) {
-            query += ' AND product_sku ILIKE $' + (queryParams.length + 1);
-            queryParams.push(`%${product_sku}%`);
-        }
 
         if (title) {
             query += ' AND title ILIKE $' + (queryParams.length + 1);
