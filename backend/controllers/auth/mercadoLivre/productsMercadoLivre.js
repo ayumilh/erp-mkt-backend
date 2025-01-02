@@ -285,6 +285,11 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 const mercadoLivreGetProducts = async (req, res) => {
     try {
         const {userid, title} = req.query;
+        
+        if (!userid) {
+            return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
+        }
+
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
 
