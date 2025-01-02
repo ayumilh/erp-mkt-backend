@@ -284,7 +284,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 //Get All Produtos no Banco
 const mercadoLivreGetProducts = async (req, res) => {
     try {
-        const {userid, sku, name} = req.query.userId;
+        const {userid, sku, name} = req.query;
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
 
