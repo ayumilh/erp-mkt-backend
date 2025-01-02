@@ -291,6 +291,9 @@ const mercadoLivreGetProducts = async (req, res) => {
         if (title) {
             query += ' AND title ILIKE $' + (queryParams.length + 1);
             queryParams.push(`%${title}%`);
+        } else {
+            query += ' AND title ILIKE $' + (queryParams.length + 1);
+            queryParams.push('%%');
         }
 
         const productsMercado = await pool.query(query, queryParams);
