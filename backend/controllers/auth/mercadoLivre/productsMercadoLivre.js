@@ -296,6 +296,9 @@ const mercadoLivreGetProducts = async (req, res) => {
             queryParams.push('%%');
         }
 
+        console.log('Consulta SQL:', query);
+        console.log('Parâmetros da consulta:', queryParams);
+
         const productsMercado = await pool.query(query, queryParams);
 
         res.status(200).json({ products: productsMercado.rows });
