@@ -284,8 +284,21 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 //Get All Produtos no Banco
 const mercadoLivreGetProducts = async (req, res) => {
     try {
-        const userid = req.query.userId;
-        const productsMercado = await pool.query('SELECT * FROM productsMercado WHERE userid = $1', [userid]);
+        const {userid, sku, name} = req.query.userId;
+        let query = 'SELECT * FROM productsMercado WHERE userid = $1';
+        const queryParams = [userid];
+
+        if (sku) {
+            query += ' AND sku ILIKE $' + (queryParams.length + 1);
+            queryParams.push(`%${sku}%`);
+        }
+
+        if (name) {
+            query += ' AND name ILIKE $' + (queryParams.length + 1);
+            queryParams.push(`%${name}%`);
+        }
+
+        const productsMercado = await pool.query(query, queryParams);
 
         res.status(200).json({ products: productsMercado.rows });
     } catch (error) {
