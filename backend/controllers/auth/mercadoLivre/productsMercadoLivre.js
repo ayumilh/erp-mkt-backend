@@ -284,7 +284,8 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 //Get All Produtos no Banco
 const mercadoLivreGetProducts = async (req, res) => {
     try {
-        const {userid, title} = req.query;
+        const userid = req.query.userId;
+        const title = req.query.title;
         
         if (!userid) {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
