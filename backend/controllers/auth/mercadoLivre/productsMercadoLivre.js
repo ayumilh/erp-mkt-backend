@@ -285,7 +285,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 const mercadoLivreGetProducts = async (req, res) => {
     try {
         const userid = req.query.userId;
-        const title = req.query.title;
+        const searchTerm = req.query.searchTerm;
         
         if (!userid) {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
@@ -294,9 +294,9 @@ const mercadoLivreGetProducts = async (req, res) => {
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
 
-        if (title && title.trim() !== '') {
-            query += ' AND title ILIKE $' + (queryParams.length + 1);
-            queryParams.push(`%${title}%`);
+        if (searchTerm && searchTerm.trim() !== '') {
+            query += ' AND (title ILIKE $' + (queryParams.length + 1) + ' OR product_sku ILIKE $' + (queryParams.length + 1) + ')';
+            queryParams.push(`%${searchTerm}%`);
         }
 
         console.log('Consulta SQL:', query);
