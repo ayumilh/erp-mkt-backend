@@ -252,7 +252,23 @@ const mercadoLivreGetAllOrders = async (req, res) => {
 const mercadoLivreGetBdOrders = async (req, res) => {
     try {
         const userid = req.query.userId;
-        const ordersMercado = await pool.query('SELECT * FROM ordersMercado WHERE userid = $1 ORDER BY date_created DESC', [userid]);
+        const searchTerm = req.query.searchTerm;
+
+        if (!userid) {
+            return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
+        }
+
+        let query = 'SELECT * FROM ordersMercado WHERE userid = $1';
+        const queryParams = [userid];
+
+        if (searchTerm && searchTerm.trim() !== '') {
+            query += ' AND (receiver_name ILIKE $' + (queryParams.length + 1) + ' OR product_sku ILIKE $' + (queryParams.length + 1) + ')';
+            queryParams.push(`%${searchTerm}%`);
+        }
+
+        query += ' ORDER BY date_created DESC';
+
+        const ordersMercado = await pool.query(query, queryParams);
 
         res.status(200).json({ orders: ordersMercado.rows });
     } catch (error) {

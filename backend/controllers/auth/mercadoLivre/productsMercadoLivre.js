@@ -290,6 +290,7 @@ const mercadoLivreGetProducts = async (req, res) => {
         if (!userid) {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
         }
+        
 
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
@@ -564,7 +565,6 @@ const mercadoLivreCreateProducts = async (req, res) => {
         res.status(500).json({ message: 'Erro ao processar a solicitação de Produtos.' });
     }
 };
-
 
 
 //PUT UPDATE PRODUCTS
