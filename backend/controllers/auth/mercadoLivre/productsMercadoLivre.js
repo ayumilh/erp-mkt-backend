@@ -294,12 +294,9 @@ const mercadoLivreGetProducts = async (req, res) => {
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
 
-        if (title) {
+        if (title && title.trim() !== '') {
             query += ' AND title ILIKE $' + (queryParams.length + 1);
             queryParams.push(`%${title}%`);
-        } else {
-            query += ' AND title ILIKE $' + (queryParams.length + 1);
-            queryParams.push('%%');
         }
 
         console.log('Consulta SQL:', query);
