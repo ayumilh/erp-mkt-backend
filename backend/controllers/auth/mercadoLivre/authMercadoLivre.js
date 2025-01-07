@@ -69,7 +69,14 @@ exports.mercadoLivreAuth = async (req, res) => {
 
         // Inserir o refresh_token na tabela usermercado junto com o ID do usuário
         await pool.query(
-            'INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) VALUES ($1, $2, $3, $4, $5)',
+            `INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) 
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (userid) 
+             DO UPDATE SET 
+                nome_mercado = EXCLUDED.nome_mercado,
+                refresh_token = EXCLUDED.refresh_token,
+                access_token = EXCLUDED.access_token,
+                user_mercado_id = EXCLUDED.user_mercado_id`,
             [nome_mercado, refresh_token, userid, access_token, user_mercado_id]
         );
 
