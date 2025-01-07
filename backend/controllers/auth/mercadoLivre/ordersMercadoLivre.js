@@ -308,12 +308,12 @@ const mercadoLivreGetApproved = async (req, res) => {
 
         // filtros
         if (precoMin) {
-            query += ` AND price >= $${queryParams.length + 1}`;
+            query += ` AND total_paid_amount >= $${queryParams.length + 1}`;
             queryParams.push(precoMin);
-        }
+        }  // total_paid_amount -> valor total pago
 
         if (precoMax) {
-            query += ` AND price <= $${queryParams.length + 1}`;
+            query += ` AND total_paid_amount <= $${queryParams.length + 1}`;
             queryParams.push(precoMax);
         }
 
