@@ -284,6 +284,8 @@ const mercadoLivreGetApproved = async (req, res) => {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
         const searchColumn = req.query.searchColumn || 'title';
+        const precoMin = req.query.precoMin;
+        const precoMax = req.query.precoMax;
         const status = 'ready_to_ship';
         const substatus = 'invoice_pending';
         // const status_simc = 'issue';
@@ -298,9 +300,21 @@ const mercadoLivreGetApproved = async (req, res) => {
                      AND substatus = $3`;
         const queryParams = [userid, status, substatus];
 
+        // pesquisa
         if (searchTerm && searchTerm.trim() !== '') {
             query += ` AND ${searchColumn} ILIKE $${queryParams.length + 1}`;
             queryParams.push(`%${searchTerm}%`);
+        }
+
+        // filtros
+        if (precoMin) {
+            query += ` AND price >= $${queryParams.length + 1}`;
+            queryParams.push(precoMin);
+        }
+
+        if (precoMax) {
+            query += ` AND price <= $${queryParams.length + 1}`;
+            queryParams.push(precoMax);
         }
 
         query += ' ORDER BY date_created DESC';

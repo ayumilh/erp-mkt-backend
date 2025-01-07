@@ -294,7 +294,6 @@ const mercadoLivreGetProducts = async (req, res) => {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
         }
 
-
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
 
@@ -314,9 +313,6 @@ const mercadoLivreGetProducts = async (req, res) => {
             query += ` AND price <= $${queryParams.length + 1}`;
             queryParams.push(precoMax);
         }
-
-        console.log('Consulta SQL:', query);
-        console.log('Parâmetros da consulta:', queryParams);
 
         const productsMercado = await pool.query(query, queryParams);
 
