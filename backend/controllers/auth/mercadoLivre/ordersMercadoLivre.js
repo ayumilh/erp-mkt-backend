@@ -254,6 +254,8 @@ const mercadoLivreGetBdOrders = async (req, res) => {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
         const searchColumn = req.query.searchColumn || 'title';
+        const precoMin = req.query.precoMin;
+        const precoMax = req.query.precoMax;
 
         if (!userid) {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
@@ -262,9 +264,21 @@ const mercadoLivreGetBdOrders = async (req, res) => {
         let query = 'SELECT * FROM ordersMercado WHERE userid = $1';
         const queryParams = [userid];
 
+        // pesquisa
         if (searchTerm && searchTerm.trim() !== '') {
             query += ` AND ${searchColumn} ILIKE $${queryParams.length + 1}`;
             queryParams.push(`%${searchTerm}%`);
+        }
+
+        // filtros
+        if (precoMin) {
+            query += ` AND total_paid_amount >= $${queryParams.length + 1}`;
+            queryParams.push(precoMin);
+        }  // total_paid_amount -> valor total pago
+
+        if (precoMax) {
+            query += ` AND total_paid_amount <= $${queryParams.length + 1}`;
+            queryParams.push(precoMax);
         }
 
         query += ' ORDER BY date_created DESC';
@@ -286,6 +300,7 @@ const mercadoLivreGetApproved = async (req, res) => {
         const searchColumn = req.query.searchColumn || 'title';
         const precoMin = req.query.precoMin;
         const precoMax = req.query.precoMax;
+
         const status = 'ready_to_ship';
         const substatus = 'invoice_pending';
         // const status_simc = 'issue';
@@ -310,15 +325,12 @@ const mercadoLivreGetApproved = async (req, res) => {
         if (precoMin) {
             query += ` AND total_paid_amount >= $${queryParams.length + 1}`;
             queryParams.push(precoMin);
-        }  // total_paid_amount -> valor total pago
+        }
 
         if (precoMax) {
             query += ` AND total_paid_amount <= $${queryParams.length + 1}`;
             queryParams.push(precoMax);
         }
-
-        console.log('query:', query);
-        console.log('queryParams:', queryParams);
 
         query += ' ORDER BY date_created DESC';
 
@@ -335,17 +347,48 @@ const mercadoLivreGetApproved = async (req, res) => {
 const mercadoLivreGetReady = async (req, res) => {
     try {
         const userid = req.query.userId;
+        const searchTerm = req.query.searchTerm;
+        const searchColumn = req.query.searchColumn || 'title';
+        const precoMin = req.query.precoMin;
+        const precoMax = req.query.precoMax;
+
         const status = 'ready_to_ship';
         const substatus = 'ready_to_print';
         const statusSimc = 'organize';
 
-        const ordersMercado = await pool.query(
-            `SELECT * FROM ordersMercado 
-                 WHERE userid = $1 
-                 AND ((status = $2 AND substatus = $3) OR status_simc = $4)
-                 ORDER BY date_created DESC`,
-            [userid, status, substatus, statusSimc]
-        );
+        let query = `SELECT * FROM ordersMercado 
+                     WHERE userid = $1 
+                     AND ((status = $2 AND substatus = $3) OR status_simc = $4)`;
+        const queryParams = [userid, status, substatus, statusSimc];
+
+        // const ordersMercado = await pool.query(
+        //     `SELECT * FROM ordersMercado 
+        //          WHERE userid = $1 
+        //          AND ((status = $2 AND substatus = $3) OR status_simc = $4)
+        //          ORDER BY date_created DESC`,
+        //     [userid, status, substatus, statusSimc]
+        // );
+
+        // pesquisa
+        if (searchTerm && searchTerm.trim() !== '') {
+            query += ` AND ${searchColumn} ILIKE $${queryParams.length + 1}`;
+            queryParams.push(`%${searchTerm}%`);
+        }
+
+        // filtros
+        if (precoMin) {
+            query += ` AND total_paid_amount >= $${queryParams.length + 1}`;
+            queryParams.push(precoMin);
+        }  // total_paid_amount -> valor total pago
+
+        if (precoMax) {
+            query += ` AND total_paid_amount <= $${queryParams.length + 1}`;
+            queryParams.push(precoMax);
+        }
+
+        query += ' ORDER BY date_created DESC';
+
+        const ordersMercado = await pool.query(query, queryParams);
 
         res.status(200).json({ orders: ordersMercado.rows });
     } catch (error) {
