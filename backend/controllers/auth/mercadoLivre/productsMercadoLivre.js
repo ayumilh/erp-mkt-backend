@@ -287,6 +287,8 @@ const mercadoLivreGetProducts = async (req, res) => {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
         const searchColumn = req.query.searchColumn || 'title';
+        const precoMin = req.query.precoMin;
+        const precoMax = req.query.precoMax;
 
         if (!userid) {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
@@ -296,9 +298,21 @@ const mercadoLivreGetProducts = async (req, res) => {
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
 
+        // pesquisa
         if (searchTerm && searchTerm.trim() !== '') {
             query += ` AND ${searchColumn} ILIKE $${queryParams.length + 1}`;
             queryParams.push(`%${searchTerm}%`);
+        }
+
+        // filtros
+        if (precoMin) {
+            query += ` AND price >= $${queryParams.length + 1}`;
+            queryParams.push(precoMin);
+        }
+
+        if (precoMax) {
+            query += ` AND price <= $${queryParams.length + 1}`;
+            queryParams.push(precoMax);
         }
 
         console.log('Consulta SQL:', query);
