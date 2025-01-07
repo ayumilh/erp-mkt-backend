@@ -317,6 +317,9 @@ const mercadoLivreGetApproved = async (req, res) => {
             queryParams.push(precoMax);
         }
 
+        console.log('query:', query);
+        console.log('queryParams:', queryParams);
+
         query += ' ORDER BY date_created DESC';
 
         const ordersMercado = await pool.query(query, queryParams);
