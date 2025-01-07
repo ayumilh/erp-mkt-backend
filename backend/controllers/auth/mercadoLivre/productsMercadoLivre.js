@@ -286,17 +286,18 @@ const mercadoLivreGetProducts = async (req, res) => {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
-        
+        const searchColumn = req.query.searchColumn || 'title';
+
         if (!userid) {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
         }
-        
+
 
         let query = 'SELECT * FROM productsMercado WHERE userid = $1';
         const queryParams = [userid];
 
         if (searchTerm && searchTerm.trim() !== '') {
-            query += ' AND (title ILIKE $' + (queryParams.length + 1) + ' OR product_sku ILIKE $' + (queryParams.length + 1) + ')';
+            query += ` AND ${searchColumn} ILIKE $${queryParams.length + 1}`;
             queryParams.push(`%${searchTerm}%`);
         }
 

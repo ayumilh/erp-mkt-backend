@@ -253,6 +253,7 @@ const mercadoLivreGetBdOrders = async (req, res) => {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
+        const searchColumn = req.query.searchColumn || 'title';
 
         if (!userid) {
             return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
@@ -262,7 +263,7 @@ const mercadoLivreGetBdOrders = async (req, res) => {
         const queryParams = [userid];
 
         if (searchTerm && searchTerm.trim() !== '') {
-            query += ' AND (receiver_name ILIKE $' + (queryParams.length + 1) + ' OR product_sku ILIKE $' + (queryParams.length + 1) + ')';
+            query += ` AND ${searchColumn} ILIKE $${queryParams.length + 1}`;
             queryParams.push(`%${searchTerm}%`);
         }
 
