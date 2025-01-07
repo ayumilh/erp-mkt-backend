@@ -282,18 +282,30 @@ const mercadoLivreGetBdOrders = async (req, res) => {
 const mercadoLivreGetApproved = async (req, res) => {
     try {
         const userid = req.query.userId;
+        const searchTerm = req.query.searchTerm;
+        const searchColumn = req.query.searchColumn || 'title';
         const status = 'ready_to_ship';
         const substatus = 'invoice_pending';
         // const status_simc = 'issue';
-        
-        const ordersMercado = await pool.query(
-            `SELECT * FROM ordersMercado 
-             WHERE userid = $1 
-             AND status = $2 
-             AND substatus = $3 
-             ORDER BY date_created DESC`, 
-            [userid, status, substatus]
-        );
+
+        if (!userid) {
+            return res.status(400).json({ message: 'O parâmetro userid é obrigatório.' });
+        }
+
+        let query = `SELECT * FROM ordersMercado 
+                     WHERE userid = $1 
+                     AND status = $2 
+                     AND substatus = $3`;
+        const queryParams = [userid, status, substatus];
+
+        if (searchTerm && searchTerm.trim() !== '') {
+            query += ` AND ${searchColumn} ILIKE $${queryParams.length + 1}`;
+            queryParams.push(`%${searchTerm}%`);
+        }
+
+        query += ' ORDER BY date_created DESC';
+
+        const ordersMercado = await pool.query(query, queryParams);
 
         res.status(200).json({ orders: ordersMercado.rows });
     } catch (error) {
@@ -302,28 +314,28 @@ const mercadoLivreGetApproved = async (req, res) => {
     }
 };
 
-    //Get Pedidos All Pedidos Ready no Banco - Pedidos pronto para enviar
-    const mercadoLivreGetReady = async (req, res) => {
-        try {
-            const userid = req.query.userId; 
-            const status = 'ready_to_ship';
-            const substatus = 'ready_to_print';
-            const statusSimc = 'organize';
-            
-            const ordersMercado = await pool.query(
-                `SELECT * FROM ordersMercado 
+//Get Pedidos All Pedidos Ready no Banco - Pedidos pronto para enviar
+const mercadoLivreGetReady = async (req, res) => {
+    try {
+        const userid = req.query.userId;
+        const status = 'ready_to_ship';
+        const substatus = 'ready_to_print';
+        const statusSimc = 'organize';
+
+        const ordersMercado = await pool.query(
+            `SELECT * FROM ordersMercado 
                  WHERE userid = $1 
                  AND ((status = $2 AND substatus = $3) OR status_simc = $4)
-                 ORDER BY date_created DESC`, 
-                [userid, status, substatus, statusSimc]
-            );
-    
-            res.status(200).json({ orders: ordersMercado.rows });
-        } catch (error) {
-            console.error('Erro ao recuperar os pedidos:', error);
-            res.status(500).json({ message: 'Erro ao recuperar os pedidos do banco de dados.' });
-        }
-    };
+                 ORDER BY date_created DESC`,
+            [userid, status, substatus, statusSimc]
+        );
+
+        res.status(200).json({ orders: ordersMercado.rows });
+    } catch (error) {
+        console.error('Erro ao recuperar os pedidos:', error);
+        res.status(500).json({ message: 'Erro ao recuperar os pedidos do banco de dados.' });
+    }
+};
 
 //Get Pedidos All Pedidos Ready Printed no Banco - Pedidos pronto para enviar mas já foi Impresso
 const mercadoLivreGetReadyPrinted = async (req, res) => {
@@ -527,7 +539,7 @@ const mercadoLivreGetCounts = async (req, res) => {
         const allOrdersCount = await pool.query(
             `SELECT COUNT(DISTINCT shipping_id) AS count
              FROM ordersMercado 
-             WHERE userid = $1`, 
+             WHERE userid = $1`,
             [userid]
         );
 
