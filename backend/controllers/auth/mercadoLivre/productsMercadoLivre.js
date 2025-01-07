@@ -103,6 +103,8 @@ const mercadoProdutosVendedorId = async (userid) => {
         // Combine results and remove duplicates
         const combinedResults = new Set([...results1, ...results2]);
 
+        console.log("Combined Results:", combinedResults);
+
         // Convert Set to Array
         return Array.from(combinedResults);
 
