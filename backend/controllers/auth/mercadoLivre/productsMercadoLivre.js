@@ -441,15 +441,34 @@ const mercadoLivreGetIdProduct = async (req, res) => {
     // }
 };
 
-const uploadImageToCloudinary = async (fileBuffer) => {
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream((error, result) => {
-            if (error) return reject(error);
-            resolve(result.secure_url);
-        });
-        uploadStream.end(fileBuffer);
-    });
+const uploadImageToCloudinary = async (imageUrl) => {
+    try {
+        // Baixar a imagem
+        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        const buffer = Buffer.from(response.data, 'binary');
 
+        // Salvar a imagem temporariamente
+        const tempFilePath = path.join(__dirname, 'temp_image');
+        fs.writeFileSync(tempFilePath, buffer);
+
+        // Verificar se a imagem é válida
+        if (!isValidImage(tempFilePath)) {
+            fs.unlinkSync(tempFilePath); // Remover o arquivo temporário
+            throw new Error('Invalid image file');
+        }
+
+        // Fazer upload da imagem para o Cloudinary
+        return new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream((error, result) => {
+                fs.unlinkSync(tempFilePath); // Remover o arquivo temporário
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            });
+            uploadStream.end(buffer);
+        });
+    } catch (error) {
+        throw new Error('Erro ao fazer upload da imagem: ' + error.message);
+    }
 };
 
 //POST CREATE PRODUCTS
