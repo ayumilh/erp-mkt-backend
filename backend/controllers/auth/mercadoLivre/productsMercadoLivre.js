@@ -1,6 +1,5 @@
 const pool = require('../../../bd.js');
 const multer = require('multer');
-const fetch = require('node-fetch');
 const fileType = require('file-type');
 const cloudinary = require('../../../utils/configs/configCloudinary.js');
 
