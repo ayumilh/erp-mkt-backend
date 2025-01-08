@@ -1,6 +1,5 @@
 const pool = require('../../../bd.js');
 const multer = require('multer');
-const fileType = require('file-type').default;
 const cloudinary = require('../../../utils/configs/configCloudinary.js');
 
 
