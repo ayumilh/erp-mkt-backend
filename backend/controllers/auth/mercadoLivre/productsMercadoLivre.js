@@ -1,6 +1,7 @@
 const pool = require('../../../bd.js');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const cloudinary = require('../../../utils/configs/configCloudinary.js');
 
 // Configuração local do multer para esta rota
