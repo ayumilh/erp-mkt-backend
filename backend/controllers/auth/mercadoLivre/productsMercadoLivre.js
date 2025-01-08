@@ -443,6 +443,12 @@ const mercadoLivreGetIdProduct = async (req, res) => {
     // }
 };
 
+const isValidImage = (buffer) => {
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+    const type = fileType(buffer);
+    return type && validExtensions.includes(`.${type.ext}`);
+};
+
 const uploadImageToCloudinary = async (imageUrl) => {
     try {
         // Baixar a imagem
