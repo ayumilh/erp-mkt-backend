@@ -453,21 +453,14 @@ const uploadImageToCloudinary = async (imageUrl) => {
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-
-        // Salvar a imagem temporariamente
-        const tempFilePath = path.join(__dirname, 'temp_image');
-        fs.writeFileSync(tempFilePath, buffer);
-
         // Verificar se a imagem é válida
-        if (!isValidImage(tempFilePath)) {
-            fs.unlinkSync(tempFilePath); // Remover o arquivo temporário
+        if (!isValidImage(buffer)) {
             throw new Error('Invalid image file');
         }
 
         // Fazer upload da imagem para o Cloudinary
         return new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream((error, result) => {
-                fs.unlinkSync(tempFilePath); // Remover o arquivo temporário
                 if (error) return reject(error);
                 resolve(result.secure_url);
             });
