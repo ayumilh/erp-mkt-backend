@@ -1,7 +1,7 @@
 const pool = require('../../../bd.js');
 const multer = require('multer');
 const cloudinary = require('../../../utils/configs/configCloudinary.js');
-
+const { fileTypeFromBuffer } = require('file-type');
 
 // Configuração local do multer para esta rota
 const storage = multer.memoryStorage();
@@ -444,7 +444,7 @@ const mercadoLivreGetIdProduct = async (req, res) => {
 
 const isValidImage = (buffer) => {
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-    const type = fileType(buffer);
+    const type = fileTypeFromBuffer(buffer);
     return type && validExtensions.includes(`.${type.ext}`);
 };
 
