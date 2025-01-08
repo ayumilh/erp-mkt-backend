@@ -85,7 +85,12 @@ exports.mercadoLivreAuth = async (req, res) => {
         
         res.status(200).json({ message: 'Refresh token salvo com sucesso.' });
     } catch (error) {
-        console.error('Erro:', error);
-        res.status(500).json({ message: 'Erro ao processar a solicitação.' });
-    }
+        if (error.message.includes('Parâmetros ausentes')) {
+            console.error('Erro de parâmetros ausentes já tratado anteriormente.');
+        } else if (error.message.includes('Usuário já existe.')) {
+            res.status(409).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Erro interno. Tente novamente mais tarde.' });
+        }
+    } 
 };
