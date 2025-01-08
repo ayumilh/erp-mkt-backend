@@ -121,7 +121,7 @@ const mercadoLivreGetItemVisits = async (req, res) => {
         // Consultar visitas de itens
         const visits = await pool.query(
             `SELECT * FROM itemVisitsMercado 
-             WHERE user_id = $1 
+             WHERE userid = $1 
              AND date_from >= $2 
              ORDER BY date_from DESC`,
             [userid, date_from]
