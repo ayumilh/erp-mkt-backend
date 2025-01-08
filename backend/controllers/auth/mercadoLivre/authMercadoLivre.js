@@ -70,12 +70,20 @@ exports.mercadoLivreAuth = async (req, res) => {
         console.log(`'User id Mercado Livre:' ${user_mercado_id} Refresh Token: ${refresh_token} Access Token: ${access_token}`);
 
         // Inserir o refresh_token na tabela usermercado junto com o ID do usuário
-        await pool.query(
-            'INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) VALUES ($1, $2, $3, $4, $5)',
-            [nome_mercado, refresh_token, userid, access_token, user_mercado_id]
-        );
+        try{
+            await pool.query(
+                'INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) VALUES ($1, $2, $3, $4, $5)',
+                [nome_mercado, refresh_token, userid, access_token, user_mercado_id]
+            );
+            res.status(200).json({ message: 'Refresh token salvo com sucesso.' });
+        } catch (dbError) {
+            if (dbError.code === '23505') { // Código de erro para violação de chave única no PostgreSQL
+                res.status(409).json({ message: 'Usuário já existe.' });
+            } else {
+                throw dbError;
+            }
+        }
 
-        res.status(200).json({ message: 'Refresh token salvo com sucesso.' });
     } catch (error) {
         console.error('Erro:', error);
         res.status(500).json({ message: 'Erro ao processar a solicitação.' });
