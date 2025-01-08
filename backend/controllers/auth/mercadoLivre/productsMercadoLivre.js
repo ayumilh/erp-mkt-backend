@@ -143,9 +143,12 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             
             const productData = await response.json();
 
+            console.log("product ID:", productId);
+
             const descriptionResponse = await fetch(`https://api.mercadolibre.com/items/${productId}/description`, {
                 headers: { 'Authorization': `Bearer ${access_token}` }
             });
+            console.log("Description Response:", descriptionResponse);
 
             if (!descriptionResponse.ok) {
                 const errorData = await descriptionResponse.json();
@@ -156,12 +159,13 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 throw new Error(errorMessage);
             }
 
-            const descriptionData = await descriptionResponse.json();
-            console.log("Description Data:", descriptionData);
-            productData.description = descriptionData.plain_text || "";
+            // const descriptionData = await descriptionResponse.json();
+            // console.log("Description Data:", descriptionData);
 
             return productData;
         }));
+
+        console.log("Products:", products);
         
         // Process each product
         for (const tokenData of products) {
