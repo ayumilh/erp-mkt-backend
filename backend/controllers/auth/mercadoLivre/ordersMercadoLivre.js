@@ -25,7 +25,7 @@ const validaIdUserMercado = async (userid) => {
     }
 }
 
-//SYNC PRODUTOS MERCADO LIVRE
+//SYNC PEDIDOS MERCADO LIVRE
 const mercadoLivreGetAllOrders = async (req, res) => {
     try {
         const userid = req.query.userId;
@@ -55,6 +55,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
             }
 
             const orders = await response.json();
+            console.log("Pedidos recebidos da API do Mercado Livre:", orders.results); // Adiciona esta linha para mostrar os pedidos
             ordersData.push(...orders.results);
         }
 

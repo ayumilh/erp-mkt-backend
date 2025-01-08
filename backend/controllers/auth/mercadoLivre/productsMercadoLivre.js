@@ -75,6 +75,8 @@ const mercadoProdutosVendedorId = async (userid) => {
         const access_token = await validaToken(userid);
         const userMercado = await validaIdUserMercado(userid);
 
+        console.log("User Mercado:", userMercado);
+
         // Define API endpoints
         const url1 = `https://api.mercadolibre.com/users/${userMercado}/items/search?orders=stop_time_asc`;
         const url2 = `https://api.mercadolibre.com/users/${userMercado}/items/search?orders=start_time_desc`;
@@ -103,8 +105,6 @@ const mercadoProdutosVendedorId = async (userid) => {
         // Combine results and remove duplicates
         const combinedResults = new Set([...results1, ...results2]);
 
-        console.log("Combined Results:", combinedResults);
-
         // Convert Set to Array
         return Array.from(combinedResults);
 
@@ -123,6 +123,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 
         console.log("Access token:", access_token);
         console.log("User ID:", userid);
+        console.log("Product ID:", idProduct);
 
         // Fetch product details concurrently
         const products = await Promise.all(idProduct.map(async (productId) => {
@@ -139,11 +140,29 @@ const mercadoLivreGetProductsSync = async (req, res) => {
                 throw new Error(errorMessage);
             }
 
-            return response.json();
+            
+            const productData = await response.json();
+
+            const descriptionResponse = await fetch(`https://api.mercadolibre.com/items/${productId}/description`, {
+                headers: { 'Authorization': `Bearer ${access_token}` }
+            });
+
+            if (!descriptionResponse.ok) {
+                const errorData = await descriptionResponse.json();
+                let errorMessage = 'Erro na solicitação da descrição';
+                if (errorData && errorData.error_description) {
+                    errorMessage = errorData.error_description;
+                }
+                throw new Error(errorMessage);
+            }
+
+            const descriptionData = await descriptionResponse.json();
+            console.log("Description Data:", descriptionData);
+            productData.description = descriptionData.plain_text || "";
+
+            return productData;
         }));
-
-        console.log("Products:", products);
-
+        
         // Process each product
         for (const tokenData of products) {
             const title = tokenData.title;
@@ -154,11 +173,13 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const quantity = parseInt(tokenData.available_quantity) || 0;
             const listing = tokenData.listing_type_id || "";
             const condition = tokenData.condition || "";
-            const description = tokenData.description?.plain_text || "";
+            const description = tokenData.description || "";
             const video_id = tokenData.video_id || "";
             const warrantyString = tokenData.warranty || "";
             const [warrantyType, warrantyTemp] = warrantyString.split(':').map(str => str.trim());
             const brand = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
+
+            console.log("Description:", description);
 
             // verificar se o produto tem GTIN
             const gtinAttribute = tokenData.variations && tokenData.variations.length > 0 && tokenData.variations[0].attributes ? tokenData.variations[0].attributes.find(attribute => attribute.id === "GTIN") : null;
@@ -275,7 +296,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             }
         }
 
-        res.status(200).json({ message: 'Produtos sincronizados com sucesso' });
+        res.status(200).json({ message: 'Produtos sincronizados com sucesso', products: products });
 
     } catch (error) {
         console.error('Erro:', error);
@@ -692,7 +713,7 @@ const mercadoLivreUpdateProducts = async (req, res) => {
 };
 
 
-//Sincromizar estoque
+//Sincronizar estoque
 const mercadoSyncStock = async (req, res) => {
     try {
         const idProduct = req.query.sku;
