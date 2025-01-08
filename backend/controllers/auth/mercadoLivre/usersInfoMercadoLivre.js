@@ -76,14 +76,14 @@ const mercadoLivreVisitsSync = async (req, res) => {
 
         const conversionRate = totalVisits > 0 ? (totalOrders / totalVisits) * 100 : 0;
 
-        const existingVisit = await pool.query('SELECT * FROM itemVisitsMercado WHERE user_id = $1 AND date_from = $2 AND date_to = $3', [userid, date_from, date_to]);
+        const existingVisit = await pool.query('SELECT * FROM itemVisitsMercado WHERE userid = $1 AND date_from = $2 AND date_to = $3', [userid, date_from, date_to]);
 
         if (existingVisit.rows.length > 0) {
             const updateQuery = `
                 UPDATE itemVisitsMercado SET
                 total_visits = $1,
                 conversion_rate = $2
-                WHERE user_id = $3 AND date_from = $4 AND date_to = $5
+                WHERE userid = $3 AND date_from = $4 AND date_to = $5
             `;
             const updateValues = [totalVisits, conversionRate, userid, date_from, date_to];
 
@@ -91,7 +91,7 @@ const mercadoLivreVisitsSync = async (req, res) => {
         } else {
             const insertQuery = `
                 INSERT INTO itemVisitsMercado (
-                    user_id, date_from, date_to, total_visits, conversion_rate
+                    userid, date_from, date_to, total_visits, conversion_rate
                 ) VALUES ($1, $2, $3, $4, $5)
             `;
             const insertValues = [userid, date_from, date_to, totalVisits, conversionRate];
@@ -110,7 +110,7 @@ const mercadoLivreVisitsSync = async (req, res) => {
 // Get Item Visits - Visitas de Itens
 const mercadoLivreGetItemVisits = async (req, res) => {
     try {
-        // Obter user_id do GetUserId
+        // Obter userid do GetUserId
         const userid = req.body.userId;
         
 

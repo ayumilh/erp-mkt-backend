@@ -13,7 +13,7 @@ const redirectUri = process.env.REDIRECT_URI;
 exports.redirectToMercadoLivreAuth = async (req, res) => {
     try {
         const encodedRedirectUri = encodeURIComponent(redirectUri);
-        const mercadoLivreAuthUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirectUri}`;
+        const mercadoLivreAuthUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirectUri}&prompt=login`;
 
         res.redirect(mercadoLivreAuthUrl);
     } catch (error) {
