@@ -13,7 +13,7 @@ const redirectUri = process.env.REDIRECT_URI;
 exports.redirectToMercadoLivreAuth = async (req, res) => {
     try {
         const encodedRedirectUri = encodeURIComponent(redirectUri);
-        const mercadoLivreAuthUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirectUri}&prompt=login`;
+        const mercadoLivreAuthUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirectUri}`;
 
         res.redirect(mercadoLivreAuthUrl);
     } catch (error) {
@@ -28,6 +28,8 @@ exports.mercadoLivreAuth = async (req, res) => {
     try {
         //recebendo code do front end
         const { code, nome_loja: nome_mercado, userId: userid } = req.body;
+
+        console.log(`'Code:' ${code} 'Nome Loja:' ${nome_mercado} 'User Id:' ${userid}`);
 
         if (!code || !nome_mercado || !userid) {
             const missingParams = [];
