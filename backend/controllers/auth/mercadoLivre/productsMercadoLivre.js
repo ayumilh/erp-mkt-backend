@@ -1,7 +1,8 @@
 const pool = require('../../../bd.js');
 const multer = require('multer');
-const fileType = require('file-type');
+const fileType = require('file-type').default;
 const cloudinary = require('../../../utils/configs/configCloudinary.js');
+
 
 // Configuração local do multer para esta rota
 const storage = multer.memoryStorage();
