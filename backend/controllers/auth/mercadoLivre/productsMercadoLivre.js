@@ -444,8 +444,11 @@ const mercadoLivreGetIdProduct = async (req, res) => {
 const uploadImageToCloudinary = async (imageUrl) => {
     try {
         // Baixar a imagem
-        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        const buffer = Buffer.from(response.data, 'binary');
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            throw new Error('Erro ao baixar a imagem');
+        }
+        const buffer = await response.buffer();
 
         // Salvar a imagem temporariamente
         const tempFilePath = path.join(__dirname, 'temp_image');
