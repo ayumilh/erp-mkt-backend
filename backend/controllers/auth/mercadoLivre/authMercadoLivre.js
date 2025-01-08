@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 dotenv.config();
 const pool = require('../../../bd.js');
-const {GetUserId}  = require('../../../utils/verifyToken.js');
+const { GetUserId } = require('../../../utils/verifyToken.js');
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -36,9 +36,9 @@ exports.mercadoLivreAuth = async (req, res) => {
             if (!code) missingParams.push('code');
             if (!nome_mercado) missingParams.push('nome_loja');
             if (!userid) missingParams.push('userId');
-            return res.status(400).json({ 
+            return res.status(400).json({
                 message: `Parâmetros ausentes: ${missingParams.join(', ')}`,
-                received: {code, nome_mercado, userid}
+                received: { code, nome_mercado, userid }
             });
         }
 
@@ -67,23 +67,23 @@ exports.mercadoLivreAuth = async (req, res) => {
         const user_mercado_id = tokenData.user_id;
         const refresh_token = tokenData.refresh_token;
         const access_token = tokenData.access_token;
-        console.log(`'User id Mercado Livre:' ${user_mercado_id} Refresh Token: ${refresh_token} Access Token: ${access_token}`);
 
-        // Inserir o refresh_token na tabela usermercado junto com o ID do usuário
-        try{
-            await pool.query(
-                'INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) VALUES ($1, $2, $3, $4, $5)',
-                [nome_mercado, refresh_token, userid, access_token, user_mercado_id]
-            );
-            res.status(200).json({ message: 'Refresh token salvo com sucesso.' });
-        } catch (dbError) {
-            if (dbError.code === '23505') { // Código de erro para violação de chave única no PostgreSQL
-                res.status(409).json({ message: 'Usuário já existe.' });
-            } else {
-                throw dbError;
-            }
+        // Verificar se o user_mercado_id já existe na tabela usermercado
+        const { rowCount } = await pool.query(
+            'SELECT 1 FROM usermercado WHERE user_mercado_id = $1',
+            [user_mercado_id]
+        );
+
+        if (rowCount > 0) {
+            return res.status(409).json({ message: 'Usuário já existe.' });
         }
 
+        await pool.query(
+            'INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) VALUES ($1, $2, $3, $4, $5)',
+            [nome_mercado, refresh_token, userid, access_token, user_mercado_id]
+        );
+        
+        res.status(200).json({ message: 'Refresh token salvo com sucesso.' });
     } catch (error) {
         console.error('Erro:', error);
         res.status(500).json({ message: 'Erro ao processar a solicitação.' });
