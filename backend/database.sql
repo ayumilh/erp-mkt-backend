@@ -51,6 +51,14 @@ CREATE TABLE productsMercado (
     userid INTEGER NOT NULL,
     date_created TIMESTAMP,
     last_updated TIMESTAMP,
+    listing VARCHAR(50),
+    condition VARCHAR(50),
+    description TEXT,
+    video_id VARCHAR(255),
+    warrantyType VARCHAR(50),
+    warrantyTemp VARCHAR(50),
+    brand VARCHAR(50),
+    gtin VARCHAR(50),
     UNIQUE (product_sku, userid),  -- cada usuário (userid) pode ter múltiplos produtos (product_sku), mas não pode ter duplicatas do mesmo product_sku
     FOREIGN KEY (userid) REFERENCES users(userid)
 );
