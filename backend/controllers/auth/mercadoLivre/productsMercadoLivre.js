@@ -448,7 +448,9 @@ const uploadImageToCloudinary = async (imageUrl) => {
         if (!response.ok) {
             throw new Error('Erro ao baixar a imagem');
         }
-        const buffer = await response.buffer();
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
 
         // Salvar a imagem temporariamente
         const tempFilePath = path.join(__dirname, 'temp_image');
