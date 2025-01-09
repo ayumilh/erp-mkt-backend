@@ -145,8 +145,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                 country: shippingData.receiver_address.country.id,
                 status: shippingData.status,
                 list_cost: shippingData.list_cost,
-                substatus: shippingData.substatus,
-                status_simc: ''
+                substatus: shippingData.substatus
             };
 
             const existingOrder = await pool.query('SELECT * FROM ordersMercado WHERE order_id = $1 AND userid = $2', [orderDetail.order_id, userid]);
@@ -206,7 +205,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     INSERT INTO ordersmercado (
                         order_id, product_sku, reason, total_paid_amount, buyer_nickname,
                         date_last_modified, total_amount, date_created, seller_nickname,
-                        status, substatus, status_simc, pack_id, quantity, shipping_id,
+                        status, substatus, pack_id, quantity, shipping_id,
                         tracking_number, tracking_method, street_name, receiver_name,
                         address_line, neighborhood, city, state, zip_code, country,
                         pictureUrls, unit_price, color_name, sale_fee, list_cost, userid
@@ -217,7 +216,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     orderDetail.order_id, orderDetail.product_sku, orderDetail.reason, orderDetail.total_paid_amount,
                     orderDetail.buyer_nickname, orderDetail.date_last_modified, orderDetail.total_amount,
                     orderDetail.date_created, orderDetail.seller_nickname, orderDetail.shipping_data.status,
-                    orderDetail.substatus, orderDetail.shipping_data.status_simc, orderDetail.pack_id, orderDetail.quantity, orderDetail.shipping_id,
+                    orderDetail.substatus, orderDetail.pack_id, orderDetail.quantity, orderDetail.shipping_id,
                     orderDetail.shipping_data.tracking_number, orderDetail.shipping_data.tracking_method, orderDetail.shipping_data.street_name, orderDetail.shipping_data.receiver_name,
                     orderDetail.shipping_data.address_line, orderDetail.shipping_data.neighborhood, orderDetail.shipping_data.city, orderDetail.shipping_data.state,
                     orderDetail.shipping_data.zip_code, orderDetail.shipping_data.country, orderDetail.pictureUrls, orderDetail.unit_price,
