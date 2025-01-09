@@ -162,8 +162,6 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 
             return productData;
         }));
-
-        console.log("Products:", products);
         
         // Process each product
         for (const tokenData of products) {
@@ -181,12 +179,9 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             const [warrantyType, warrantyTemp] = warrantyString.split(':').map(str => str.trim());
             const brand = tokenData.attributes.find(attr => attr.id === "BRAND")?.value_name || "";
 
-            console.log("Description:", description);
-
             // verificar se o produto tem GTIN
             const gtinAttribute = tokenData.variations && tokenData.variations.length > 0 && tokenData.variations[0].attributes ? tokenData.variations[0].attributes.find(attribute => attribute.id === "GTIN") : null;
             const gtin = gtinAttribute ? gtinAttribute.value_name : '';
-            console.log("GTIN:", gtin);
 
             let color = "N/A";
             if (tokenData.variations && tokenData.variations.length > 0) {
@@ -458,8 +453,6 @@ const uploadImageToCloudinary = async (imageUrl) => {
         }
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-
-        console.log("Buffer:", buffer);
 
         // Verificar se a imagem é válida
         if (!await isValidImage(buffer)) {
