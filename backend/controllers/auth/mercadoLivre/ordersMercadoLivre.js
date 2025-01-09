@@ -209,8 +209,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                         status, substatus, status_simc, pack_id, quantity, shipping_id,
                         tracking_number, tracking_method, street_name, receiver_name,
                         address_line, neighborhood, city, state, zip_code, country,
-                        pictureUrls, unit_price, color_name, sale_fee, list_cost,
-                        userid
+                        pictureUrls, unit_price, color_name, sale_fee, list_cost, userid
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30);
                 `;
 
