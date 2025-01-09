@@ -188,14 +188,14 @@ CREATE TABLE ordersmercado (
     city VARCHAR(255),
     state VARCHAR(255),
     zip_code VARCHAR(50),
-    country VARCHAR(255)
+    country VARCHAR(255),
     pictureUrls TEXT,
     unit_price NUMERIC(10, 2),
-    color_name VARCHAR,
+    color_name VARCHAR(255),
     sale_fee NUMERIC,
     list_cost NUMERIC,
     invoice_id VARCHAR(255),
-    COLUMN invoice_key VARCHAR(255)
+    invoice_key VARCHAR(255),
     userid INTEGER NOT NULL,
     FOREIGN KEY (userid) REFERENCES users(userid),
     FOREIGN KEY (product_sku) REFERENCES productsMercado(product_sku)

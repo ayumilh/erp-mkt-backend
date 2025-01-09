@@ -76,11 +76,11 @@ const mercadoLivreVisitsSync = async (req, res) => {
 
         const conversionRate = totalVisits > 0 ? (totalOrders / totalVisits) * 100 : 0;
 
-        const existingVisit = await pool.query('SELECT * FROM itemVisitsMercado WHERE userid = $1 AND date_from = $2 AND date_to = $3', [userid, date_from, date_to]);
+        const existingVisit = await pool.query('SELECT * FROM itemvisitsmercado WHERE userid = $1 AND date_from = $2 AND date_to = $3', [userid, date_from, date_to]);
 
         if (existingVisit.rows.length > 0) {
             const updateQuery = `
-                UPDATE itemVisitsMercado SET
+                UPDATE itemvisitsmercado SET
                 total_visits = $1,
                 conversion_rate = $2
                 WHERE userid = $3 AND date_from = $4 AND date_to = $5
@@ -90,7 +90,7 @@ const mercadoLivreVisitsSync = async (req, res) => {
             await pool.query(updateQuery, updateValues);
         } else {
             const insertQuery = `
-                INSERT INTO itemVisitsMercado (
+                INSERT INTO itemvisitsmercado (
                     userid, date_from, date_to, total_visits, conversion_rate
                 ) VALUES ($1, $2, $3, $4, $5)
             `;
