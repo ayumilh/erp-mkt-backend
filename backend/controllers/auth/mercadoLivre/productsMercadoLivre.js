@@ -444,8 +444,8 @@ const mercadoLivreGetIdProduct = async (req, res) => {
 
 const isValidImage = async (buffer) => {
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-    const { default: imageType } = await import('image-type');
-    const type = imageType(buffer);
+    const { fileTypeFromBuffer } = await import('file-type');
+    const type = fileTypeFromBuffer(buffer);
     return type && validExtensions.includes(`.${type.ext}`);
 };
 
