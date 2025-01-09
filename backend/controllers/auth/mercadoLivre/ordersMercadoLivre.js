@@ -78,9 +78,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     product_sku: order.order_items[0].item.id,
                     pictureUrls: null,
                     unit_price: order.order_items[0].unit_price,
-                    sale_fee: order.order_items[0].sale_fee,
-                    invoice_id: null,
-                    invoice_key: null
+                    sale_fee: order.order_items[0].sale_fee
                 };
 
                 const colors = order.order_items[0].item.variation_attributes
@@ -212,8 +210,8 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                         tracking_number, tracking_method, street_name, receiver_name,
                         address_line, neighborhood, city, state, zip_code, country,
                         pictureUrls, unit_price, color_name, sale_fee, list_cost,
-                        invoice_id, invoice_key, userid
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32);
+                        userid
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30);
                 `;
 
                 const values = [
@@ -224,8 +222,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     orderDetail.shipping_data.tracking_number, orderDetail.shipping_data.tracking_method, orderDetail.shipping_data.street_name, orderDetail.shipping_data.receiver_name,
                     orderDetail.shipping_data.address_line, orderDetail.shipping_data.neighborhood, orderDetail.shipping_data.city, orderDetail.shipping_data.state,
                     orderDetail.shipping_data.zip_code, orderDetail.shipping_data.country, orderDetail.pictureUrls, orderDetail.unit_price,
-                    orderDetail.color_name, orderDetail.sale_fee, orderDetail.shipping_data.list_cost, orderDetail.invoice_id,
-                    orderDetail.invoice_key, userid
+                    orderDetail.color_name, orderDetail.sale_fee, orderDetail.shipping_data.list_cost userid
                 ];
 
                 await pool.query(insertQuery, values);
