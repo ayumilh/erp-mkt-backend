@@ -79,8 +79,8 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     pictureUrls: null,
                     unit_price: order.order_items[0].unit_price,
                     sale_fee: order.order_items[0].sale_fee,
-                    invoice_id: order.invoice_id,
-                    invoice_key: order.invoice_key
+                    invoice_id: null,
+                    invoice_key: null
                 };
 
                 const colors = order.order_items[0].item.variation_attributes
