@@ -144,18 +144,18 @@ const mercadoLivreGetProductsSync = async (req, res) => {
             
             const productData = await response.json();
 
-            const descriptionResponse = await fetch(`https://api.mercadolibre.com/items/${productId}/description`, {
-                headers: { 'Authorization': `Bearer ${access_token}` }
-            });
+            // const descriptionResponse = await fetch(`https://api.mercadolibre.com/items/${productId}/description`, {
+            //     headers: { 'Authorization': `Bearer ${access_token}` }
+            // });
 
-            if (!descriptionResponse.ok) {
-                const errorData = await descriptionResponse.json();
-                let errorMessage = 'Erro na solicitação da descrição';
-                if (errorData && errorData.error_description) {
-                    errorMessage = errorData.error_description;
-                }
-                throw new Error(errorMessage);
-            }
+            // if (!descriptionResponse.ok) {
+            //     const errorData = await descriptionResponse.json();
+            //     let errorMessage = 'Erro na solicitação da descrição';
+            //     if (errorData && errorData.error_description) {
+            //         errorMessage = errorData.error_description;
+            //     }
+            //     throw new Error(errorMessage);
+            // }
 
             // const descriptionData = await descriptionResponse.json();
             // console.log("Description Data:", descriptionData);
