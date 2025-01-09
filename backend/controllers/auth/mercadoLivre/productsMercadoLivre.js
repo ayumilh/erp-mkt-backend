@@ -1,8 +1,7 @@
 const pool = require('../../../bd.js');
 const multer = require('multer');
 const cloudinary = require('../../../utils/configs/configCloudinary.js');
-const fileType = require('file-type');
-const { fileTypeFromBuffer } = fileType;
+const imageType = require('image-type');
 
 
 // Configuração local do multer para esta rota
@@ -444,9 +443,9 @@ const mercadoLivreGetIdProduct = async (req, res) => {
     // }
 };
 
-const isValidImage = async (buffer) => {
+const isValidImage = (buffer) => {
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-    const type = await fileTypeFromBuffer(buffer);
+    const type = imageType(buffer);
     return type && validExtensions.includes(`.${type.ext}`);
 };
 
@@ -458,6 +457,8 @@ const uploadImageToCloudinary = async (imageUrl) => {
             throw new Error('Erro ao baixar a imagem');
         }
         const buffer = await response.buffer();
+
+        console.log("Buffer:", buffer);
 
         // Verificar se a imagem é válida
         if (!await isValidImage(buffer)) {
