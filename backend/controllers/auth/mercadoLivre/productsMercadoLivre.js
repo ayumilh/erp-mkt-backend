@@ -444,9 +444,9 @@ const mercadoLivreGetIdProduct = async (req, res) => {
     // }
 };
 
-const isValidImage = (buffer) => {
+const isValidImage = async (buffer) => {
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-    const type = fileTypeFromBuffer(buffer);
+    const type = await fileTypeFromBuffer(buffer);
     return type && validExtensions.includes(`.${type.ext}`);
 };
 
@@ -457,12 +457,11 @@ const uploadImageToCloudinary = async (imageUrl) => {
         if (!response.ok) {
             throw new Error('Erro ao baixar a imagem');
         }
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        const buffer = await response.buffer();
 
         // Verificar se a imagem é válida
-        if (!isValidImage(buffer)) {
-            throw new Error('Invalid image file');
+        if (!await isValidImage(buffer)) {
+            throw new Error('Tipo de arquivo não suportado');
         }
 
         // Fazer upload da imagem para o Cloudinary
