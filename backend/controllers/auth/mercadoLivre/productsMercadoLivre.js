@@ -445,7 +445,7 @@ const mercadoLivreGetIdProduct = async (req, res) => {
 const isValidImage = async (buffer) => {
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
     const { fileTypeFromBuffer } = await import('file-type');
-    const type = fileTypeFromBuffer(buffer);
+    const type = await fileTypeFromBuffer(buffer);
     return type && validExtensions.includes(`.${type.ext}`);
 };
 
@@ -456,12 +456,13 @@ const uploadImageToCloudinary = async (imageUrl) => {
         if (!response.ok) {
             throw new Error('Erro ao baixar a imagem');
         }
-        const buffer = await response.arrayBuffer();
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
 
         console.log("Buffer:", buffer);
 
         // Verificar se a imagem é válida
-        if (!await isValidImage(Buffer.from(buffer))) {
+        if (!await isValidImage(buffer)) {
             throw new Error('Tipo de arquivo não suportado');
         }
 
