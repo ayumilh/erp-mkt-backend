@@ -55,7 +55,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
             }
 
             const orders = await response.json();
-            console.log("Pedidos recebidos da API do Mercado Livre:", orders.results); // Adiciona esta linha para mostrar os pedidos
+            // console.log("Pedidos recebidos da API do Mercado Livre:", orders.results); // Adiciona esta linha para mostrar os pedidos
             ordersData.push(...orders.results);
         }
 
@@ -78,7 +78,9 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     product_sku: order.order_items[0].item.id,
                     pictureUrls: null,
                     unit_price: order.order_items[0].unit_price,
-                    sale_fee: order.order_items[0].sale_fee
+                    sale_fee: order.order_items[0].sale_fee,
+                    invoice_id: order.invoice_id,
+                    invoice_key: order.invoice_key
                 };
 
                 const colors = order.order_items[0].item.variation_attributes
