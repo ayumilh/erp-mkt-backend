@@ -130,6 +130,8 @@ const mercadoLivreGetAllOrders = async (req, res) => {
             }
 
             const shippingData = await shippingResponse.json();
+            console.log('shippingData:', shippingData);
+
             orderDetail.shipping_data = {
                 tracking_number: shippingData.tracking_number,
                 tracking_method: shippingData.tracking_method,
@@ -143,7 +145,8 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                 country: shippingData.receiver_address.country.id,
                 status: shippingData.status,
                 list_cost: shippingData.list_cost,
-                substatus: shippingData.substatus
+                substatus: shippingData.substatus,
+                status_simc: ''
             };
 
             const existingOrder = await pool.query('SELECT * FROM ordersMercado WHERE order_id = $1 AND userid = $2', [orderDetail.order_id, userid]);
@@ -215,7 +218,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     orderDetail.order_id, orderDetail.product_sku, orderDetail.reason, orderDetail.total_paid_amount,
                     orderDetail.buyer_nickname, orderDetail.date_last_modified, orderDetail.total_amount,
                     orderDetail.date_created, orderDetail.seller_nickname, orderDetail.shipping_data.status,
-                    orderDetail.substatus, orderDetail.status_simc, orderDetail.pack_id, orderDetail.quantity, orderDetail.shipping_id,
+                    orderDetail.substatus, orderDetail.shipping_data.status_simc, orderDetail.pack_id, orderDetail.quantity, orderDetail.shipping_id,
                     orderDetail.shipping_data.tracking_number, orderDetail.shipping_data.tracking_method, orderDetail.shipping_data.street_name, orderDetail.shipping_data.receiver_name,
                     orderDetail.shipping_data.address_line, orderDetail.shipping_data.neighborhood, orderDetail.shipping_data.city, orderDetail.shipping_data.state,
                     orderDetail.shipping_data.zip_code, orderDetail.shipping_data.country, orderDetail.pictureUrls, orderDetail.unit_price,
