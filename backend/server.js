@@ -9,6 +9,8 @@ const session = require('express-session');
 const cron = require('./utils/refresh.js'); // Importando o arquivo com a função de atualização de tokens
 const rateLimit = require('./middleware/rateLimiter.js');
 
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(rateLimit);
 app.use(bodyParser.json());
