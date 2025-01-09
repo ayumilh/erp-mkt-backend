@@ -221,7 +221,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
                     orderDetail.shipping_data.tracking_number, orderDetail.shipping_data.tracking_method, orderDetail.shipping_data.street_name, orderDetail.shipping_data.receiver_name,
                     orderDetail.shipping_data.address_line, orderDetail.shipping_data.neighborhood, orderDetail.shipping_data.city, orderDetail.shipping_data.state,
                     orderDetail.shipping_data.zip_code, orderDetail.shipping_data.country, orderDetail.pictureUrls, orderDetail.unit_price,
-                    orderDetail.color_name, orderDetail.sale_fee, orderDetail.shipping_data.list_cost userid
+                    orderDetail.color_name, orderDetail.sale_fee, orderDetail.shipping_data.list_cost, userid
                 ];
 
                 await pool.query(insertQuery, values);
