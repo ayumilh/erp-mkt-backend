@@ -456,12 +456,12 @@ const uploadImageToCloudinary = async (imageUrl) => {
         if (!response.ok) {
             throw new Error('Erro ao baixar a imagem');
         }
-        const buffer = await response.buffer();
+        const buffer = await response.arrayBuffer();
 
         console.log("Buffer:", buffer);
 
         // Verificar se a imagem é válida
-        if (!await isValidImage(buffer)) {
+        if (!await isValidImage(Buffer.from(buffer))) {
             throw new Error('Tipo de arquivo não suportado');
         }
 
