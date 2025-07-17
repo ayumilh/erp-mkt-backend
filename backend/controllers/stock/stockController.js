@@ -1,5 +1,4 @@
-import pool from '../../bd.js';
-import { getUserId } from '../../utils/verifyToken.js';
+import prisma from '../../prisma/client.js';
 import Joi from 'joi';
 
 

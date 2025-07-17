@@ -1,7 +1,6 @@
 import { auth } from "../utils/auth.js";
 import { fromNodeHeaders } from "better-auth/node";
 import prisma from "../prisma/client.js";
-import bcrypt from "bcrypt";
 
 /**
  * POST /api/auth/register
