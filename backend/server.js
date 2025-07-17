@@ -1,68 +1,67 @@
-const express = require("express");
+import "dotenv/config";
+import express from "express";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import helmet from "helmet";
+import session from "express-session";
+import * as refresh from "./utils/refresh.js";
+import rateLimit from "./middleware/rateLimiter.js";
+import { authenticate } from './middleware/authMiddleware.js';
+
+import configRoutes from "./routes/configRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import usersRoutes from "./routes/usersRoutes.js";
+import stockRoutes from "./routes/stock/stock.js";
+import mercadoLivreRoutes from "./routes/mercadoLivre/mercadoLivreRoutes.js";
+import magaluRoutes from "./routes/magalu/magaluRoutes.js";
+import statistics from "./routes/utils/statistics.js";
+import shopeeRoutes from "./routes/shopee/shopeeRoutes.js";
+
+const allowedOrigins = [
+  "https://toquasetedando.com",
+  "http://localhost:3001"
+];
+
 const app = express();
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const cors = require("cors");
-const helmet = require('helmet');
-const dotenv = require("dotenv");
-const session = require('express-session');
-const cron = require('./utils/refresh.js'); // Importando o arquivo com a função de atualização de tokens
-const rateLimit = require('./middleware/rateLimiter.js');
 
 app.set('trust proxy', 1);
 
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(rateLimit);
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: ["https://erp-mkt-frontend.vercel.app", "http://localhost:3000"],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+    else callback(new Error("Not allowed by CORS"));
+  },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
   })
 );
 app.use(cookieParser());
-
-
-//routes
-const pool = require('./bd.js');
-const authRoutes = require('./routes/authRoutes.js');
-const configRoutes = require('./routes/configRoutes.js');
-const usersRoutes = require('./routes/usersRoutes.js');
-const stockRoutes = require('./routes/stock/stock.js');
-const mercadoLivreRoutes = require('./routes/mercadoLivre/mercadoLivreRoutes.js');
-const magaluRoutes = require('./routes/magalu/magaluRoutes.js');
-const verifyToken = require('./routes/utils/utils.js');
-const statistics = require('./routes/utils/statistics.js');
-
-const shopeeRoutes = require('./routes/shopee/shopeeRoutes.js');
-
-dotenv.config(); // Configuração automática do .env
-
 
 app.get("/", (req, res) => {
   res.send("Bem-vindo à página principal");
 }); // Rota de teste Tela Principal
 
-
-// Rotas
-
 //mercado
-app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/stock', stockRoutes);
-app.use('/api/mercadolivre', mercadoLivreRoutes);
-app.use('/api/magalu', magaluRoutes);
-app.use('/api/', verifyToken);
-app.use('/api/statistics', statistics);
-app.use('/api/config', configRoutes);
+app.use('/api/users', authenticate, usersRoutes);
+app.use('/api/stock', authenticate, stockRoutes);
+app.use('/api/mercadolivre', authenticate, mercadoLivreRoutes);
+app.use('/api/magalu', authenticate, magaluRoutes);
+app.use('/api/statistics', authenticate, statistics);
+app.use('/api/config', authenticate, configRoutes);
 
 //Shopee
 app.use('/api/shopee', shopeeRoutes);
 
+app.use('/api/auth', authRoutes);
 
 const port = process.env.PORT || 4002
 // Inicialização do servidor
-app.listen(port, () => {
-  pool.connect(); // Conexão com o banco de dados
-  console.log("Backend server está rodando!");
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Servidor com Socket.IO rodando na porta ${port}`);
 });

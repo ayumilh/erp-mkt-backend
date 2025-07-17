@@ -1,7 +1,9 @@
-const dotenv = require('dotenv');
-dotenv.config();
-const pool = require('../../../bd.js');
-const { GetUserId } = require('../../../utils/verifyToken.js');
+import dotenv from 'dotenv'
+dotenv.config()
+
+import pool from '../../../bd.js'
+import { getUserId } from '../../../utils/verifyToken.js'
+
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -10,7 +12,7 @@ const redirectUri = process.env.REDIRECT_URI;
 
 
 // PASSO 1
-exports.redirectToMercadoLivreAuth = async (req, res) => {
+export async function redirectToMercadoLivreAuth (req, res) {
     try {
         const encodedRedirectUri = encodeURIComponent(redirectUri);
         const mercadoLivreAuthUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirectUri}`;
@@ -24,7 +26,7 @@ exports.redirectToMercadoLivreAuth = async (req, res) => {
 
 
 // PASSO 2
-exports.mercadoLivreAuth = async (req, res) => {
+export async function mercadoLivreAuth (req, res) {
     try {
         //recebendo code do front end
         const { code, nome_loja: nome_mercado, userId: userid } = req.body;

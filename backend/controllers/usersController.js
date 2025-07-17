@@ -1,6 +1,6 @@
-const pool = require('../bd.js');
+import pool from '../bd.js';
 
-exports.getAllUsers = async (req, res) => {
+export async function getAllUsers (req, res) {
     try {
         const users = await pool.query('SELECT * FROM users');
         res.status(200).json(users.rows);
@@ -10,7 +10,7 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
-exports.getUserById = async (req, res) => {
+export async function getUserById (req, res) {
     try {
         const { id } = req.params;
         const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
@@ -24,7 +24,7 @@ exports.getUserById = async (req, res) => {
     }
 };
 
-exports.updateUser = async (req, res) => {
+export async function updateUser (req, res) {
     try {
         const { id } = req.params;
         const { email, senha, data_nascimento, telefone, cnpj } = req.body;
@@ -41,7 +41,7 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-exports.deleteUser = async (req, res) => {
+export async function deleteUser (req, res) {
     try {
         const { id } = req.params;
 

@@ -1,9 +1,10 @@
-const pool = require('../../bd.js');
-const { GetUserId } = require('../../utils/verifyToken.js');
+import pool from '../../bd.js'
+import { getUserId } from '../../utils/verifyToken.js'
 
 
-const getProductByIdSKU = async (req, res) => {
-    const userid = GetUserId();
+
+export async function getProductByIdSKU (req, res) {
+    const userid = getUserId();
     const sku = req.params.sku; // Supondo que o SKU seja passado como parâmetro na URL
 
     try {
@@ -24,8 +25,8 @@ const getProductByIdSKU = async (req, res) => {
 };
 
 // search Products Adicionar SKU Estoque
-const searchProducts = async (req, res) => {
-    const userid = GetUserId();
+export async function searchProducts (req, res) {
+    const userid = getUserId();
     const { searchQuery } = req.query; // Parâmetro de consulta para o critério de busca
 
     try {
@@ -69,10 +70,10 @@ const searchProducts = async (req, res) => {
 // };
 
 // Puxar o Produto depois de Salvar na hora de Selecionar em Adicionar SKU (Kit Estoque)
-const getProductSolo = async (req, res) => {
+export async function getProductSolo (req, res) {
     try {
   
-        const userid = GetUserId(); 
+        const userid = getUserId(); 
         const SKUs = req.query.idProduct;
 
         // Verificar se foram fornecidos SKUs na requisição
@@ -103,7 +104,7 @@ const getProductSolo = async (req, res) => {
 const syncStock = async (req, res) => {
     try {
         // Usar o SKU temporariamente armazenado
-        const userid = GetUserId(); 
+        const userid = getUserId(); 
         const quantidade = req.body.quantidade;
         const transito = req.body.transito;
         const disponivel = req.body.disponivel;
@@ -113,11 +114,4 @@ const syncStock = async (req, res) => {
         console.error('Erro ao obter itens do estoque:', error);
         res.status(500).send('Erro interno do servidor.');
     }
-};
-
-
-module.exports = {
-    getProductSolo,
-    searchProducts,
-    getProductByIdSKU
 };

@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Better Auth models
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verification")
+}
+
+// Application user table (replaces older users)
+model AppUser {
+  id        String       @id
+  email     String    @unique @db.VarChar(255)
+  telefone  String?   @db.VarChar(20)
+  cnpj      String?   @db.VarChar(14)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  userMercados      userMercado[]
+  userMagalus       userMagalu[]
+  userShopees       userShopee[]
+  productsMercado   productsMercado[]
+  stock             stock[]
+  stockVariant      stockVariant[]
+  stockKit          stockKit[]
+  ordersMercado     ordersMercado[]
+  companyInformation companyInformation[]
+  itemVisits        itemVisitsMercado[]
+}
+
+model userMercado {
+  user_mercado_id Int     @id @default(autoincrement())
+  nome_mercado    String  @db.VarChar(255)
+  refresh_token   String? @db.VarChar(255)
+  access_token    String? @db.VarChar(255)
+  userId          String
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model userMagalu {
+  user_magalu_id Int     @id @default(autoincrement())
+  nome_magalu    String  @db.VarChar(255)
+  refresh_token  String? @db.VarChar(255)
+  access_token   String? @db.VarChar(255)
+  userId         String
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model userShopee {
+  user_shop_id  BigInt  @id
+  nome_shopee   String  @db.VarChar(255)
+  refresh_token String? @db.VarChar(255)
+  access_token  String? @db.VarChar(255)
+  userId        String
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model productsMercado {
+  product_sku       String    @id @db.VarChar(255)
+  title             String    @db.VarChar(255)
+  price             Decimal   @db.Decimal(10,2)
+  status            String    @db.VarChar(50)
+  pictureUrls       String    @db.Text
+  color             String?   @db.VarChar(50)
+  diameter          String?   @db.VarChar(50)
+  available_quantity Int?
+  userId            String
+  date_created      DateTime? @db.Timestamp(6)
+  last_updated      DateTime? @db.Timestamp(6)
+  listing           String?   @db.VarChar(50)
+  condition         String?   @db.VarChar(50)
+  description       String?
+  video_id          String?   @db.VarChar(255)
+  warrantyType      String?   @db.VarChar(50)
+  warrantyTemp      String?   @db.VarChar(50)
+  brand             String?   @db.VarChar(50)
+  gtin              String?   @db.VarChar(50)
+  updated_at        DateTime  @updatedAt
+
+  user   AppUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders ordersMercado[]   @relation("ProductsToOrders")
+
+  @@unique([product_sku, userId])
+}
+
+model stock {
+  sku                  String    @id @db.VarChar(55)
+  nome_do_produto      String?   @db.VarChar(255)
+  apelido_do_produto   String?   @db.VarChar(255)
+  categorias           String?   @db.VarChar(255)
+  codigo_de_barras     String?   @db.VarChar(50)
+  data_de_lancamento   DateTime? @db.Date
+  status_da_venda      String?   @db.VarChar(10)
+  vendedor             String?   @db.VarChar(100)
+  preco_de_varejo      Decimal?  @db.Decimal(10,2)
+  custo_de_compra      Decimal?  @db.Decimal(10,2)
+  descricao            String?
+  link_do_fornecedor   String?   @db.VarChar(255)
+  marca                String?   @db.VarChar(100)
+  tamanho              String?   @db.VarChar(50)
+  peso_do_pacote       Decimal?  @db.Decimal(10,2)
+  tamanho_de_embalagem String?   @db.VarChar(50)
+  link_do_video        String?   @db.VarChar(255)
+  ncm                  String?   @db.VarChar(20)
+  cest                 String?   @db.VarChar(20)
+  unidade              String?   @db.VarChar(10)
+  origem               String?   @db.VarChar(50)
+  quantidade           Int?
+  transito             Int?
+  disponivel           Int?
+  quantidade_total     Int?
+  skumercado           String?   @db.VarChar(50)
+  userId               String
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model stockVariant {
+  spu                  Int       @id
+  sku                  String?   @db.VarChar(255)
+  nome_do_produto      String?   @db.VarChar(255)
+  apelido_do_produto   String?   @db.VarChar(100)
+  categorias           String?   @db.VarChar(255)
+  codigo_de_barras     String?   @db.VarChar(50)
+  data_de_lancamento   DateTime? @db.Date
+  status_da_venda      String?   @db.VarChar(10)
+  vendedor             String?   @db.VarChar(100)
+  preco_de_varejo      Decimal?  @db.Decimal(10,2)
+  custo_de_compra      Decimal?  @db.Decimal(10,2)
+  descricao            String?
+  link_do_fornecedor   String?   @db.VarChar(255)
+  marca                String?   @db.VarChar(100)
+  tamanho              String?   @db.VarChar(50)
+  cor                  String?   @db.VarChar(50)
+  adicionar            String?   @db.VarChar(255)
+  peso_do_pacote       Decimal?  @db.Decimal(10,2)
+  tamanho_de_embalagem String?   @db.VarChar(50)
+  link_do_video        String?   @db.VarChar(255)
+  ncm                  String?   @db.VarChar(20)
+  cest                 String?   @db.VarChar(20)
+  unidade              String?   @db.VarChar(10)
+  origem               String?   @db.VarChar(50)
+  quantidade           Int?
+  transito             Int?
+  disponivel           Int?
+  quantidade_total     Int?
+ 	userId               String
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model stockKit {
+  skukit             String   @id @db.VarChar(55)
+  sku                String   @db.VarChar(255)
+  nome_do_produto    String?  @db.VarChar(255)
+  apelido_do_produto String?  @db.VarChar(255)
+  categorias         String?  @db.VarChar(255)
+  custo_de_compra    Decimal? @db.Decimal(10,2)
+  status_da_venda    String?  @db.VarChar(10)
+  skumercado         String?  @db.VarChar(50)
+  quantidade         Int?
+  userId             String
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ordersMercado {
+  id                 Int       @id @default(autoincrement())
+  order_id           String    @db.VarChar(255)
+  product_sku        String    @db.VarChar(255)
+  reason             String?   @db.VarChar(255)
+  total_paid_amount  Decimal?  @db.Decimal
+  buyer_nickname     String?   @db.VarChar(255)
+  date_last_modified String?   @db.VarChar(90)
+  total_amount       Decimal?  @db.Decimal
+  date_created       DateTime? @db.Timestamp(6)
+  seller_nickname    String?   @db.VarChar(255)
+  status             String?   @db.VarChar(255)
+  substatus          String?   @db.VarChar(255)
+  status_simc        String?   @db.VarChar(255)
+  pack_id            String?   @db.VarChar(255)
+  quantity           Int?
+  shipping_id        String?   @db.VarChar(255)
+  tracking_number    String?   @db.VarChar(255)
+  tracking_method    String?   @db.VarChar(255)
+  street_name        String?   @db.VarChar(255)
+  receiver_name      String?   @db.VarChar(255)
+  address_line       String?   @db.VarChar(255)
+  neighborhood       String?   @db.VarChar(255)
+  city               String?   @db.VarChar(255)
+  state              String?   @db.VarChar(255)
+  zip_code           String?   @db.VarChar(50)
+  country            String?   @db.VarChar(255)
+  pictureurls        String?
+  unit_price         Decimal?  @db.Decimal(10,2)
+  color_name         String?   @db.VarChar(255)
+  sale_fee           Decimal?  @db.Decimal
+  list_cost          Decimal?  @db.Decimal
+  invoice_id         String?   @db.VarChar(255)
+  invoice_key        String?   @db.VarChar(255)
+  userId             String
+
+  user       AppUser             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productRef productsMercado    @relation(fields: [product_sku], references: [product_sku], onDelete: Cascade, name: "ProductsToOrders")
+
+  @@unique([order_id, product_sku])
+}
+
+model itemVisitsMercado {
+  userId          String
+  date_from       DateTime  @db.Timestamp(6)
+  date_to         DateTime  @db.Timestamp(6)
+  total_visits    Int
+  conversion_rate Decimal   @db.Decimal(5,2)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, date_from, date_to])
+}
+
+model companyInformation {
+  cnpj               String    @id @db.VarChar(20)
+  serial_number      Int?
+  company_name       String    @db.VarChar(255)
+  tax_type           String?   @db.VarChar(50)
+  company_type       String?   @db.VarChar(50)
+  state_registration String?   @db.VarChar(50)
+  email              String    @db.VarChar(255)
+  postal_code        String?   @db.VarChar(10)
+  address            String?   @db.VarChar(255)
+  address_number     String?   @db.VarChar(10)
+  neighborhood       String?   @db.VarChar(100)
+  city               String?   @db.VarChar(100)
+  state              String?   @db.VarChar(2)
+  userId             String
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -1,36 +1,28 @@
-const dotenv = require("dotenv");
-dotenv.config(); // Configuração automática do .env
-const { Pool } = require('pg'); // Importa o PostgreSQL
+// bd.js
+import dotenv from "dotenv"
+dotenv.config()
 
-// Conexão com o PostgreSQL
+import pg from "pg"
+const { Pool } = pg
+
+// Em produção (NODE_ENV==='production') usamos SSL com rejectUnauthorized:false
+// Em dev (qualquer outro NODE_ENV), desabilitamos por completo
+const isProd = process.env.NODE_ENV === "production"
+
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_DATABASE,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-    ssl: {
-        require: true,                        
-        rejectUnauthorized: false
-    }
-});
-const connect = async () => {
-    try {
-        await pool.connect();
-        console.log("Conectei no PostgreSQL");
-    } catch (error) {
-        console.error("Erro ao conectar no PostgreSQL:", error);
-        process.exit(1); // INICIANDO VERIFICAÇÂO COM O BANCO
-    }
-};
+  connectionString: process.env.DATABASE_URL,
+  ssl: isProd
+    ? { rejectUnauthorized: false }
+    : false,
+})
 
-pool.on('error', (err, client) => {
-    console.error('Erro inesperado no cliente PostgreSQL:', err);
-    process.exit(-1);
-});
+pool.on("connect", () => {
+  console.log("PostgreSQL conectado com sucesso")
+})
 
-pool.on('connect', () => {
-    console.log('PostgreSQL conectado com sucesso');
-}); // FINALIZANDO VERIFICAÇÂO COM O BANCO
+pool.on("error", (err) => {
+  console.error("Erro inesperado no cliente PostgreSQL:", err)
+  process.exit(-1)
+})
 
-module.exports = pool;
+export default pool

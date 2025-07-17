@@ -1,9 +1,9 @@
-const express = require('express');
-const statistics = require('../../utils/statistics.js');
+import { Router } from 'express';
+import { statisticsRealync, salesstatistics } from '../../utils/statistics.js';
 
-const router = express.Router();
+const router = Router();
 
-router.get('/real', statistics.statisticsReal);
-router.get('/sales', statistics.salesstatistics);
+router.get('/real', statisticsRealync);
+router.get('/sales', salesstatistics);
 
-module.exports = router;
+export default router;

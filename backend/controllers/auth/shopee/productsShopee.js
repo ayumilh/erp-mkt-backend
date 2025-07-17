@@ -1,6 +1,6 @@
-const pool = require('../../../bd.js');
-const dotenv = require('dotenv');
-dotenv.config();
+import dotenv from "dotenv";
+import pool from "../../../bd.js";
+import crypto from "crypto";
 
 
 function generateSign(partnerId, path, timestamp, partnerKey) {
@@ -126,7 +126,7 @@ const obterInformacoesExtrasProduto = async (shopId, partnerId, accessToken, ite
 };
 
 // Função principal para sincronizar produtos com sign
-const shopeeGetProductsSync = async (req, res) => {
+export async function shopeeGetProductsSync (req, res) {
     try {
         const userId = req.query.userId;
         const partnerId = process.env.partnerIdShopee;
@@ -213,8 +213,4 @@ const shopeeGetProductsSync = async (req, res) => {
         console.error('Error:', error);
         res.status(500).json({ message: 'Error synchronizing products with Shopee.' });
     }
-};
-
-module.exports = {
-    shopeeGetProductsSync
 };

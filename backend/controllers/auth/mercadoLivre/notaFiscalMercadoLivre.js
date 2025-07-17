@@ -1,8 +1,9 @@
-const pool = require('../../../bd.js');
-const { GetUserId } = require('../../../utils/verifyToken.js');
-const { format, startOfDay, subDays } = require('date-fns');
-const JSZip = require('jszip')
-const archiver = require('archiver');
+import pool from '../../../bd.js'
+import { getUserId } from '../../../utils/verifyToken.js'
+import { format, startOfDay, subDays } from 'date-fns'
+import JSZip from 'jszip'
+import archiver from 'archiver'
+
 
 const validaToken = async (userid) => {
 
@@ -28,9 +29,7 @@ const validaIdUserMercado = async (userid) => {
     }
 }
 
-
-
-const downloadInvoices = async (req, res) => {
+export async function downloadInvoices (req, res) {
     try {
         const userid = req.body.userId;
         const { start, end } = req.body;
@@ -126,11 +125,11 @@ const downloadInvoices = async (req, res) => {
 };
 
 
-const mercadoLivreProcessNotes = async (req, res) => {
+export async function mercadoLivreProcessNotes (req, res) {
     try {
         const access_token = await validaToken();
         const userMercado = await validaIdUserMercado();
-        const userid = GetUserId();
+        const userid = getUserId();
 
         // const status = 'ready_to_ship';
         // const substatus = 'printed';
@@ -173,7 +172,7 @@ const mercadoLivreProcessNotes = async (req, res) => {
     }
 };
 
-const getSyncInvoices = async (req, res) => {
+export async function getSyncInvoices (req, res) {
     try {
         const userid = req.body.userId;
         const access_token = await validaToken(userid);
@@ -260,7 +259,7 @@ const getSyncInvoices = async (req, res) => {
     }
 };
 
-const getInvoices = async (req, res) => {
+export async function getInvoices (req, res) {
     try {
         const userid = req.query.userId;
 
@@ -291,12 +290,4 @@ const getInvoices = async (req, res) => {
         console.error('Erro:', error);
         res.status(500).json({ message: 'Erro ao recuperar as notas fiscais aprovadas do banco de dados.' });
     }
-};
-
-
-module.exports = {
-    downloadInvoices,
-    mercadoLivreProcessNotes,
-    getSyncInvoices,
-    getInvoices
 };

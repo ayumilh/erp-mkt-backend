@@ -1,8 +1,7 @@
-const dotenv = require('dotenv');
-const pool = require('../../../bd.js');
-const crypto = require('crypto');
+import dotenv from "dotenv";
+import pool from "../../../bd.js";
+import crypto from "crypto";
 dotenv.config();
-
 
 
 // Função para gerar o sign HMAC-SHA256
@@ -11,7 +10,7 @@ function generateSign(partnerId, path, timestamp, partnerKey) {
     return crypto.createHmac('sha256', partnerKey).update(baseString).digest('hex');
 }
 
-const shopeeAuth = async (req, res) => {
+export async function shopeeAuth (req, res) {
     try {
         const partnerId = Number(process.env.partnerIdShopee); // Converte para número
         const partnerKey = process.env.partnerKeyShopee;
@@ -80,8 +79,4 @@ const shopeeAuth = async (req, res) => {
         console.error('Erro ao processar a solicitação:', error);
         res.status(500).json({ message: 'Erro ao processar a solicitação.' });
     }
-};
-
-module.exports = {
-    shopeeAuth
 };

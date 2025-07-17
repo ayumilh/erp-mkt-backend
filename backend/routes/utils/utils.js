@@ -1,8 +1,10 @@
-const express = require('express');
-const verifyToken = require('../../utils/verifyToken.js');
+// src/routes/authRoutes.js
+import { Router } from 'express';
+import { setUserId } from '../../utils/verifyToken.js';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/userId', verifyToken.userId);
+// salva o userId recebido no corpo da requisição
+router.post('/userId', setUserId);
 
-module.exports = router;
+export default router;

@@ -1,6 +1,7 @@
-const pool = require('../../../bd.js');
-const { GetUserId } = require('../../../utils/verifyToken.js');
-const { startOfDay, endOfDay, formatISO } = require('date-fns');
+import pool from '../../../bd.js'
+import { getUserId } from '../../../utils/verifyToken.js'
+import { startOfDay, endOfDay, formatISO } from 'date-fns'
+
 
 const validaToken = async (userid) => {
 
@@ -26,7 +27,7 @@ const validaIdUserMercado = async (userid) => {
     }
 }
 
-const mercadoLivreVisitsSync = async (req, res) => {
+export async function mercadoLivreVisitsSync (req, res) {
     try {
         const userid = req.body.userId;
         const access_token = await validaToken(userid);
@@ -108,7 +109,7 @@ const mercadoLivreVisitsSync = async (req, res) => {
 };
 
 // Get Item Visits - Visitas de Itens
-const mercadoLivreGetItemVisits = async (req, res) => {
+export async function mercadoLivreGetItemVisits (req, res) {
     try {
         // Obter userid do GetUserId
         const userid = req.body.userId;
@@ -134,10 +135,3 @@ const mercadoLivreGetItemVisits = async (req, res) => {
         res.status(500).json({ message: 'Erro ao recuperar as visitas de itens do banco de dados.' });
     }
 };
-
-
-module.exports = {
-    mercadoLivreVisitsSync,
-    mercadoLivreGetItemVisits
-};
-

@@ -1,8 +1,8 @@
-const express = require('express');
-const authMagalu = require('../../controllers/auth/magalu/authMagalu.js');
+import express from 'express';
+import { magaluAuth } from '../../controllers/auth/magalu/authMagalu.js';
 
 const router = express.Router();
 
-router.post('/redirect', authMagalu.magaluAuth);
+router.post('/redirect', magaluAuth);
 
-module.exports = router;
+export default router;

@@ -1,11 +1,10 @@
-const pool = require('../../../bd.js');
-const multer = require('multer');
-const cloudinary = require('../../../utils/configs/configCloudinary.js');
-
+import pool from '../../../bd.js'
+import multer from 'multer'
+import cloudinary from '../../../utils/configs/configCloudinary.js'
 
 // Configuração local do multer para esta rota
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const storage = multer.memoryStorage()
+export const upload = multer({ storage })
 
 const validaToken = async (userid) => {
 
@@ -71,6 +70,7 @@ const validaIdUserMercado = async (userid) => {
 // };
 
 //Pegar o Id dos itens do vendedor para puxar no Get
+
 const mercadoProdutosVendedorId = async (userid) => {
     try {
         const access_token = await validaToken(userid);
@@ -116,7 +116,7 @@ const mercadoProdutosVendedorId = async (userid) => {
 };
 
 //SYNC PRODUCTS
-const mercadoLivreGetProductsSync = async (req, res) => {
+export async function mercadoLivreGetProductsSync (req, res) {
     try {
         const userid = req.query.userId;
         const idProduct = await mercadoProdutosVendedorId(userid); // Pass userid to mercadoProdutosVendedorId
@@ -302,7 +302,7 @@ const mercadoLivreGetProductsSync = async (req, res) => {
 };
 
 //Get All Produtos no Banco
-const mercadoLivreGetProducts = async (req, res) => {
+export async function mercadoLivreGetProducts (req, res) {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
@@ -344,7 +344,7 @@ const mercadoLivreGetProducts = async (req, res) => {
 };
 
 //GET PRODUCT POR ID
-const mercadoLivreGetIdProduct = async (req, res) => {
+export async function mercadoLivreGetIdProduct (req, res) {
 
     try {
         const userid = req.query.userId;
@@ -473,7 +473,7 @@ const uploadImageToCloudinary = async (imageUrl) => {
 };
 
 //POST CREATE PRODUCTS
-const mercadoLivreCreateProducts = async (req, res) => {
+export async function mercadoLivreCreateProducts (req, res) {
     try {
 
         // Log para verificar o conteúdo da requisição
@@ -623,7 +623,7 @@ const mercadoLivreCreateProducts = async (req, res) => {
 
 
 //PUT UPDATE PRODUCTS
-const mercadoLivreUpdateProducts = async (req, res) => {
+export async function mercadoLivreUpdateProducts (req, res) {
     try {
         const idProduct = req.body.productSKU;
         const description = req.body.description;
@@ -805,14 +805,4 @@ const mercadoSyncStock = async (req, res) => {
         console.error('Erro:', error);
         res.status(500).json({ message: 'Erro ao processar a solicitação de Produtos.' });
     }
-};
-
-
-module.exports = {
-    mercadoLivreGetProductsSync,
-    mercadoLivreGetProducts,
-    mercadoLivreGetIdProduct,
-    mercadoLivreCreateProducts,
-    mercadoLivreUpdateProducts,
-    upload // Exportando o upload para uso no roteador
 };

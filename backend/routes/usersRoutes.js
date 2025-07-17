@@ -1,16 +1,17 @@
-const express = require('express');
-const usersController = require('../controllers/usersController.js');
-const getUsers = require('../utils/getUsers.js');
+// src/routes/usersRoutes.js
+import { Router } from 'express';
+import * as usersController from '../controllers/usersController.js';
+import { getUserIdBd } from '../utils/getUsers.js';
 
-const router = express.Router();
+const router = Router();
 
+// Se for reabilitar outras rotas, basta descomentar:
 // router.get('/', usersController.getAllUsers);
 // router.get('/:id', usersController.getUserById);
 // router.put('/:id', usersController.updateUser);
 // router.delete('/:id', usersController.deleteUser);
 
-//Informações Usuario Get
-router.get('/info', getUsers.getUserIdBd);
+// Informações do usuário
+router.get('/info', getUserIdBd);
 
-
-module.exports = router;
+export default router;

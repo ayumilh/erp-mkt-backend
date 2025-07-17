@@ -1,108 +1,126 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const pool = require('../bd.js');
-const dotenv = require('dotenv');
-dotenv.config();
+import { auth } from "../utils/auth.js";
+import { fromNodeHeaders } from "better-auth/node";
+import prisma from "../prisma/client.js";
+import bcrypt from "bcrypt";
 
-const secretKey = process.env.JWT; // Chave secreta para assinar o token JWT
+/**
+ * POST /api/auth/register
+ * Cadastra um novo usuário no Better Auth e na base local (Prisma).
+ */
+export async function register(req, res) {
+  try {
+    const { email, senha, telefone, cnpj } = req.body;
 
-exports.register = async (req, res) => {
-    try {
-        const { email, senha, telefone, cnpj } = req.body;
-
-        // Verifique se todos os campos obrigatórios foram fornecidos
-        if (!email || !senha) {
-            return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios.' });
-        }
-
-        const hashedPassword = await bcrypt.hash(senha, 10);
-
-        await pool.query(
-            'INSERT INTO users (email, senha, telefone, cnpj) VALUES ($1, $2, $3, $4)',
-            [email, hashedPassword, telefone, cnpj]
-        );
-
-        res.status(201).json({ message: 'Usuário registrado com sucesso.' });
-    } catch (error) {
-        console.error('Erro ao registrar o usuário:', error);
-        res.status(500).json({ message: 'Erro ao registrar o usuário.' });
+    if (!email || !senha) {
+      return res.status(400).json({ message: "Por favor, forneça email e senha." });
     }
-};
- 
-exports.login = async (req, res) => {
-    try {
-        const { email, senha, googleLogin } = req.body;
 
-        // Verificação se e-mail foi fornecido
-        if (!email) {
-            return res.status(400).json({ message: 'Por favor, forneça um email.' });
-        }
+    // 1) Cria usuário no Better Auth
+    const result = await auth.api.signUpEmail({
+      body: { email, password: senha, name: email }, // 👈 Usando o email como nome
+      asResponse: true,
+    });
 
-        const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-
-        if (user.rows.length === 0) {
-            return res.status(404).json({ message: 'Usuário não encontrado.' });
-        }
-
-        // Verifica se o login é através do Google
-        if (!googleLogin) {
-            // Verificação se senha foi fornecida
-            if (!senha) {
-                return res.status(400).json({ message: 'Por favor, forneça uma senha.' });
-            }
-
-            const passwordMatch = await bcrypt.compare(senha, user.rows[0].senha);
-            if (!passwordMatch) {
-                return res.status(401).json({ message: 'Credenciais inválidas.' });
-            }
-        }
-
-        const token = jwt.sign({ userid: user.rows[0].userid }, secretKey, { expiresIn: '1h' });
-
-        res.cookie('token', token, { 
-            httpOnly: true,
-            secure: true, // Apenas enviar o cookie através de conexões HTTPS
-            sameSite: 'strict', // Prevenir ataques CSRF
-            maxAge: 24 * 60 * 60 * 1000 // Tempo de expiração do cookie em milissegundos (1 dia)
-        });
-        
-        res.status(200).json({ auth: true, token: token });
-    } catch (error) {
-        console.error('Erro ao fazer login:', error.message);
-        res.status(500).json({ message: 'Erro ao fazer login.' });
+    for (const [key, value] of Object.entries(result.headers || {})) {
+      if (Array.isArray(value)) {
+        value.forEach(v => res.append(key, v));
+      } else if (value !== undefined) {
+        res.set(key, value);
+      }
     }
-};
 
-exports.changePassword = async (req, res) => {
-    try {
-        const { email, senha, novaSenha } = req.body;
+    const body = await result.json();
 
-        // Verificação se os campos obrigatórios foram fornecidos
-        if (!email || !senha || !novaSenha) {
-            return res.status(400).json({ message: 'Por favor, forneça email, senha atual e nova senha.' });
-        }
-
-        const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-
-        if (user.rows.length === 0) {
-            return res.status(404).json({ message: 'Usuário não encontrado.' });
-        }
-
-        const passwordMatch = await bcrypt.compare(senha, user.rows[0].senha);
-        if (!passwordMatch) {
-            return res.status(401).json({ message: 'Senha atual incorreta.' });
-        }
-
-        const hashedNewPassword = await bcrypt.hash(novaSenha, 10);
-
-        await pool.query(
-            'UPDATE users SET senha = $1 WHERE email = $2',
-            [hashedNewPassword, email]
-        );
-
-        res.status(200).json({ message: 'Senha atualizada com sucesso.' });
-    } catch (error) {
-        console.error('Erro ao alterar senha:', error.message);
-        res.status(500).json({ message: 'Erro ao alterar senha.' });
+    if (result.status >= 400 || !body.user) {
+      return res.status(result.status).json(body);
     }
-};
+
+    const userId = body.user.id;
+
+    await prisma.appUser.create({
+      data: {
+        id: userId,
+        email: email,
+        telefone: telefone,
+        cnpj: cnpj,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Usuário registrado com sucesso.",
+      user: body.user,
+    });
+
+  } catch (err) {
+    console.error("Erro ao registrar usuário:", err);
+    return res.status(500).json({ message: "Erro ao registrar usuário." });
+  }
+}
+
+
+/**
+ * POST /api/auth/login
+ * Autentica via Better Auth, replica cookies e retorna dados locais adicionais.
+ */
+export async function login(req, res) {
+  try {
+    const { email, senha } = req.body;
+    if (!email || !senha) {
+      return res.status(400).json({ message: "Por favor, forneça email e senha." });
+    }
+
+    // 1) dispara o signIn no Better Auth
+    const result = await auth.api.signInEmail({
+      body: { email, password: senha },
+      asResponse: true,
+    });
+
+    // 2) replica todos os headers (cookies de sessão etc)
+    for (const [key, value] of Object.entries(result.headers || {})) {
+      if (Array.isArray(value)) {
+        value.forEach(v => res.append(key, v));
+      } else if (value !== undefined) {
+        res.set(key, value);
+      }
+    }
+    const rawSetCookie = result.headers.get("set-cookie");
+
+    for (const [key, value] of Object.entries(result.headers || {})) {
+      if (Array.isArray(value)) value.forEach((v) => res.append(key, v));
+      else if (value !== undefined) res.setHeader(key, value);
+    }
+
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+
+    if (rawSetCookie) {
+      const cookies = Array.isArray(rawSetCookie) ? rawSetCookie : [rawSetCookie];
+      const patched = cookies.map(cookie =>
+        cookie
+          .replace(/;\s*SameSite=Lax/i, '; SameSite=None')
+          .replace(/;\s*SameSite=Strict/i, '; SameSite=None')
+          .replace(/;\s*Secure/i, '') + '; Secure'
+      );
+      res.setHeader("Set-Cookie", patched);
+    }
+
+    const bodyBuffer = await result.arrayBuffer();
+    const responseData = JSON.parse(Buffer.from(bodyBuffer).toString());
+
+    // 4) opcional: busca dados extras na sua tabela local
+    const local = await prisma.appUser.findUnique({
+      where: { id: responseData.user.id },
+      select: { telefone: true, cnpj: true },
+    });
+
+
+    // 5) retorna o payload do Better Auth + info local
+    return res.status(200).json({
+      ...responseData,
+      local,
+    });
+
+  } catch (err) {
+    console.error("Erro ao fazer login:", err);
+    return res.status(500).json({ message: "Erro ao fazer login." });
+  }
+}

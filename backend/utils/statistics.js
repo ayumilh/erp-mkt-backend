@@ -1,10 +1,10 @@
-const pool = require('../bd.js');
-const { GetUserId } = require('./verifyToken.js');
+import pool from '../bd.js';
+import { getUserId } from './verifyToken.js';
 
 // Função para obter estatísticas de pedidos
-exports.salesstatistics = async (req, res) => {
+export async function salesstatistics (req, res) {
     try {
-        const userid = GetUserId();
+        const userid = getUserId();
         const query = `
             SELECT 
                 DATE(date_created) AS "Data",
@@ -34,7 +34,7 @@ exports.salesstatistics = async (req, res) => {
     }
 };
 
-exports.statisticsReal = async (req, res) => {
+export async function statisticsRealync (req, res) {
     try {
         const userid = GetUserId(); 
         const query = `

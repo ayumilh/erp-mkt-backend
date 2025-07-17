@@ -1,6 +1,6 @@
-const cron = require('node-cron');
-const pool = require('../bd.js');
-const dotenv = require('dotenv');
+import cron from 'node-cron'
+import pool from '../bd.js'
+import dotenv from 'dotenv'
 dotenv.config();
 
 const clientId_magalu = process.env.CLIENT_ID_MAGALU;
@@ -8,7 +8,7 @@ const clientSecret_magalu = process.env.CLIENT_SECRET_MAGALU;
 
 
 //REFRESH TOKEN MERCADO LIVRE
-async function atualizarRefreshTokenMercadoLivre() {
+export async function atualizarRefreshTokenMercadoLivre() {
     try {
         // Buscar todos os registros da tabela usermercado
         const queryResult = await pool.query('SELECT user_mercado_id, refresh_token, access_token FROM usermercado');
@@ -57,7 +57,7 @@ async function atualizarRefreshTokenMercadoLivre() {
 
 //REFRESH TOKEN Magalu
 
-async function atualizarRefreshTokenMagalu() {
+export async function atualizarRefreshTokenMagalu() {
     try {
         // Buscar todos os registros da tabela usermagalu
         const queryResult = await pool.query('SELECT user_magalu_id, access_token, refresh_token FROM usermagalu');
@@ -105,7 +105,7 @@ async function atualizarRefreshTokenMagalu() {
 }
 
 // Função para atualizar o refresh token da Shopee
-async function atualizarRefreshTokenShopee() {
+export async function atualizarRefreshTokenShopee() {
     try {
         // Buscar todos os registros que precisam de atualização de token
         const queryResult = await pool.query('SELECT user_shopee_id, refresh_token FROM user_shopee');

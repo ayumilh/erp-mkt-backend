@@ -1,4 +1,4 @@
-const pool = require('../../../bd.js');
+import pool from '../../../bd.js'
 
 const validaToken = async (userid) => {
 
@@ -12,7 +12,7 @@ const validaToken = async (userid) => {
     }
 }
 
-const syncMercadoLivreStock = async (req, res) => {
+export async function syncMercadoLivreStock (req, res) {
     try {
 
         const userid = req.query.userId;
@@ -112,7 +112,7 @@ const generateUniqueSKU = async () => {
 };
 
 
-const productStockMercado = async (req, res) => {
+export async function productStockMercado (req, res) {
     const userid = req.query.userId;
     const productsData = req.body.productsData;
     console.log(productsData)
@@ -154,11 +154,3 @@ const productStockMercado = async (req, res) => {
         res.status(500).send('Erro interno do servidor.');
     }
 };
-
-
-
-module.exports = {
-    syncMercadoLivreStock,
-    productStockMercado
-};
-

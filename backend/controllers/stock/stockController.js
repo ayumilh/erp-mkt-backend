@@ -1,6 +1,7 @@
-const pool = require('../../bd.js');
-const { GetUserId } = require('../../utils/verifyToken.js');
-const Joi = require('joi');
+import pool from '../../bd.js';
+import { getUserId } from '../../utils/verifyToken.js';
+import Joi from 'joi';
+
 
 const stockSchema = Joi.object({
   SKU: Joi.string().max(55).required(),
@@ -27,7 +28,6 @@ const stockSchema = Joi.object({
   quantidade: Joi.array().items(Joi.number().integer()).optional(),
   SkuMercado: Joi.array().items(Joi.string().max(50)).allow('').optional(),
 });
-
 
 const stockVariantSchema = Joi.object({
   SPU: Joi.number().integer().required(),
@@ -61,254 +61,278 @@ const stockVariantSchema = Joi.object({
 });
 
 // Rota para criar um novo item no estoque
-const productStock = async (req, res) => {
-  const userid = GetUserId();
+export async function productStock(req, res) {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).send('Usuário não autenticado.');
 
   try {
     const { error, value } = stockSchema.validate(req.body);
-    if (error) {
-      return res.status(400).send(error.details[0].message);
-    }
+    if (error) return res.status(400).send(error.details[0].message);
 
     const body = value;
 
     // Verificar e ajustar o status da venda
-    let statusVenda = body.Status_da_Venda;
-    if (statusVenda) {
-      statusVenda = statusVenda === 'Ativo' ? 'Ativo' : 'Inativo';
-    }
+    let statusVenda = body.Status_da_Venda
+      ? (body.Status_da_Venda === 'Ativo' ? 'Ativo' : 'Inativo')
+      : null;
 
-    // Verificar se SkuMercado é uma matriz e concatená-la com vírgulas
-    let skuMercado = body.skuMercado;
-    if (Array.isArray(skuMercado)) {
-      skuMercado = skuMercado.join(', ');
-    }
+    // SkuMercado → string
+    let skuMercado = Array.isArray(body.SkuMercado)
+      ? body.SkuMercado.join(', ')
+      : body.SkuMercado;
 
-    // Somar todos os valores de quantidade se for um array
-    let quantidade = body.quantidade;
-    if (Array.isArray(quantidade)) {
-      quantidade = quantidade.reduce((acc, curr) => acc + curr, 0);
-    }
+    // quantidade → number
+    let quantidade = Array.isArray(body.quantidade)
+      ? body.quantidade.reduce((a, c) => a + c, 0)
+      : body.quantidade;
 
-    // Insere o produto no banco de dados
-    const result = await pool.query(
-      `INSERT INTO stock (SKU, Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda,
-        Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem,
-        Link_do_Video, NCM, CEST, Unidade, Origem, quantidade, skuMercado, userid)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`,
-      [body.SKU, body.Nome_do_Produto, body.Apelido_do_Produto, body.Categorias, body.Codigo_de_Barras, body.Data_de_Lancamento, statusVenda,
-      body.Vendedor, body.Preco_de_Varejo, body.Custo_de_Compra, body.Descricao, body.Link_do_Fornecedor, body.Brand, body.Peso_do_Pacote, body.Tamanho_de_Embalagem,
-      body.Link_do_Video, body.NCM, body.CEST, body.Unidade, body.Origem, quantidade, skuMercado, userid]
-    );
+    await prisma.stock.create({
+      data: {
+        sku: body.SKU,
+        nome_do_produto: body.Nome_do_Produto,
+        apelido_do_produto: body.Apelido_do_Produto,
+        categorias: body.Categorias,
+        codigo_de_barras: body.Codigo_de_Barras,
+        data_de_lancamento: body.Data_de_Lancamento,
+        status_da_venda: statusVenda,
+        vendedor: body.Vendedor,
+        preco_de_varejo: body.Preco_de_Varejo
+          ? parseFloat(body.Preco_de_Varejo)
+          : null,
+        custo_de_compra: body.Custo_de_Compra
+          ? parseFloat(body.Custo_de_Compra)
+          : null,
+        descricao: body.Descricao,
+        link_do_fornecedor: body.Link_do_Fornecedor,
+        marca: body.Brand,
+        peso_do_pacote: body.Peso_do_Pacote
+          ? parseFloat(body.Peso_do_Pacote)
+          : null,
+        tamanho_de_embalagem: body.Tamanho_de_Embalagem,
+        link_do_video: body.Link_do_Video,
+        ncm: body.NCM,
+        cest: body.CEST,
+        unidade: body.Unidade,
+        origem: body.Origem,
+        quantidade: quantidade,
+        skumercado: skuMercado,
+        userId: userId,
+      },
+    });
 
-    res.status(201).send('Item adicionado ao estoque.');
-  } catch (error) {
-    console.error('Erro ao adicionar item:', error);
-    if (error.code === '23505') { // Erro de violação de restrição de chave única
+    return res.status(201).send('Item adicionado ao estoque.');
+  } catch (err) {
+    console.error('Erro ao adicionar item:', err);
+    if (err.code === 'P2002')
       return res.status(400).send('SKU ou Código de Barras já existem.');
-    }
-    res.status(500).send('Erro interno do servidor.');
+    return res.status(500).send('Erro interno do servidor.');
   }
-};
-
-
+}
 
 // EDITAR PRODUTO ESTOQUE
-const editProductStock = async (req, res) => {
-  const userid = GetUserId();
+export async function editProductStock(req, res) {
+  const userId = req.user?.id;
   const SKU = req.body.productSKU;
+  if (!userId) return res.status(401).send('Usuário não autenticado.');
 
   try {
-    // Validação Joi
     const { error, value } = stockSchema.validate(req.body);
-    if (error) {
-      return res.status(400).send(error.details[0].message);
-    }
+    if (error) return res.status(400).send(error.details[0].message);
 
     const body = value;
 
-    const result = await pool.query(
-      `UPDATE stock SET 
-        Nome_do_Produto = $1, 
-        Apelido_do_Produto = $2, 
-        Categorias = $3, 
-        Codigo_de_Barras = $4,
-        Data_de_Lancamento = $5, 
-        Status_da_Venda = $6, 
-        Vendedor = $7, 
-        Preco_de_Varejo = $8, 
-        Custo_de_Compra = $9,
-        Descricao = $10, 
-        Link_do_Fornecedor = $11, 
-        Brand = $12, 
-        Peso_do_Pacote = $13, 
-        Tamanho_de_Embalagem = $14,
-        Link_do_Video = $15, 
-        NCM = $16, 
-        CEST = $17, 
-        Unidade = $18, 
-        Origem = $19, 
-        quantidade = $20 
-      WHERE SKU = $21 AND userid = $22`,
-      [body.Nome_do_Produto, body.Apelido_do_Produto, body.Categorias, body.Codigo_de_Barras, body.Data_de_Lancamento,
-      body.Status_da_Venda, body.Vendedor, body.Preco_de_Varejo, body.Custo_de_Compra, body.Descricao, body.Link_do_Fornecedor,
-      body.Brand, body.Peso_do_Pacote, body.Tamanho_de_Embalagem, body.Link_do_Video, body.NCM, body.CEST, body.Unidade,
-      body.Origem, body.quantidade, SKU, userid]
-    );
+    // Mesma lógica de parseFloat/arrays do create...
+    let statusVenda = body.Status_da_Venda
+      ? (body.Status_da_Venda === 'Ativo' ? 'Ativo' : 'Inativo')
+      : null;
+    let skuMercado = Array.isArray(body.SkuMercado)
+      ? body.SkuMercado.join(', ')
+      : body.SkuMercado;
+    let quantidade = Array.isArray(body.quantidade)
+      ? body.quantidade.reduce((a, c) => a + c, 0)
+      : body.quantidade;
 
-    if (result.rowCount === 0) {
+    const update = await prisma.stock.updateMany({
+      where: { sku: SKU, userId },
+      data: {
+        nome_do_produto: body.Nome_do_Produto,
+        apelido_do_produto: body.Apelido_do_Produto,
+        categorias: body.Categorias,
+        codigo_de_barras: body.Codigo_de_Barras,
+        data_de_lancamento: body.Data_de_Lancamento,
+        status_da_venda: statusVenda,
+        vendedor: body.Vendedor,
+        preco_de_varejo: body.Preco_de_Varejo
+          ? parseFloat(body.Preco_de_Varejo)
+          : null,
+        custo_de_compra: body.Custo_de_Compra
+          ? parseFloat(body.Custo_de_Compra)
+          : null,
+        descricao: body.Descricao,
+        link_do_fornecedor: body.Link_do_Fornecedor,
+        marca: body.Brand,
+        peso_do_pacote: body.Peso_do_Pacote
+          ? parseFloat(body.Peso_do_Pacote)
+          : null,
+        tamanho_de_embalagem: body.Tamanho_de_Embalagem,
+        link_do_video: body.Link_do_Video,
+        ncm: body.NCM,
+        cest: body.CEST,
+        unidade: body.Unidade,
+        origem: body.Origem,
+        quantidade,
+        skumercado: skuMercado,
+      },
+    });
+
+    if (update.count === 0)
       return res.status(404).json({ error: 'Produto não encontrado.' });
-    }
 
-    res.status(200).json({ message: 'Produto atualizado com sucesso.' });
-  } catch (error) {
-    console.error('Erro ao editar o produto:', error);
-    res.status(500).json({ error: 'Erro interno do servidor.' });
+    return res.status(200).json({ message: 'Produto atualizado com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao editar o produto:', err);
+    return res.status(500).json({ error: 'Erro interno do servidor.' });
   }
-};
+}
 
-// Rota para criar Viarentes de produto no estoque
-const productVariStockVariant = async (req, res) => {
-  
-  const { error } = stockVariantSchema.validate(req.body);
+// Rota para criar variantes de produto no estoque
+export async function productVariStockVariant(req, res) {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).send('Usuário não autenticado.');
 
-  if (error) {
-    return res.status(400).send(`Erro de validação: ${error.details[0].message}`);
-  }
+  const { error, products } = req.body;
+  if (error) return res.status(400).send(error.details[0].message);
 
-  const userid = GetUserId();
-  const { products } = req.body; // Objeto de produtos para criar
-
+  const { variacoes, ...base } = products;
   try {
-    const insertPromises = [];
+    const creations = (variacoes || []).map((v) => ({
+      data: {
+        spu: base.SPU, // supondo que vem em base.SPU
+        sku: base.SKU,
+        nome_do_produto: base.Nome_do_Produto,
+        apelido_do_produto: base.Apelido_do_Produto,
+        categorias: base.Categorias,
+        codigo_de_barras: base.Codigo_de_Barras,
+        data_de_lancamento: base.Data_de_Lancamento,
+        status_da_venda: base.Status_da_Venda,
+        vendedor: base.Vendedor,
+        preco_de_varejo: base.Preco_de_Varejo
+          ? parseFloat(base.Preco_de_Varejo)
+          : null,
+        custo_de_compra: base.Custo_de_Compra
+          ? parseFloat(base.Custo_de_Compra)
+          : null,
+        descricao: base.Descricao,
+        link_do_fornecedor: base.Link_do_Fornecedor,
+        marca: base.Brand,
+        peso_do_pacote: base.Peso_do_Pacote
+          ? parseFloat(base.Peso_do_Pacote)
+          : null,
+        tamanho_de_embalagem: base.Tamanho_de_Embalagem,
+        link_do_video: base.Link_do_Video,
+        ncm: base.NCM,
+        cest: base.CEST,
+        unidade: base.Unidade,
+        origem: base.Origem,
+        quantidade: base.quantidade,
+        transito: v.transito,
+        disponivel: v.disponivel,
+        quantidade_total: v.quantidade_total,
+        tamanho: v.tamanho,
+        cor: v.cor,
+        adicionar: v.adicionar,
+        userId,
+      },
+    }));
 
-    if (products.variacoes && products.variacoes.length > 0) {
-      // Itera sobre as variações de cada produto
-      for (let i = 0; i < products.variacoes.length; i++) {
-        const variacao = products.variacoes[i];
-        // Cria um novo objeto de produto com os dados originais
-        const novoProduto = {
-          ...products, // Mantém os dados do produto original
-          Cor: variacao.cor,
-          Tamanho: variacao.tamanho,
-          Adicionar: variacao.adicionar
-        };
-
-        // Insere o novo produto no banco de dados
-        const result = await insertNewProduct(novoProduto, userid);
-        insertPromises.push(result);
-      }
-    } else {
-      // Se o produto não tiver variações, insira-o como está no banco de dados
-      const result = await insertNewProduct(products, userid);
-      insertPromises.push(result);
+    // se não houver variações, cria apenas o base
+    if (creations.length === 0) {
+      creations.push({
+        data: {
+          ...creations[0].data,
+          // sem cor, tamanho etc
+        },
+      });
     }
 
-    // Aguarda todas as inserções serem concluídas
-    await Promise.all(insertPromises);
-
-    res.status(201).send('Produtos adicionados ao estoque.');
-  } catch (error) {
-    console.error('Erro ao adicionar produtos:', error);
-    if (error.code === '23505') {
+    await prisma.stockVariant.createMany({ data: creations.map(c => c.data) });
+    return res.status(201).send('Variantes adicionadas ao estoque.');
+  } catch (err) {
+    console.error('Erro ao adicionar variantes:', err);
+    if (err.code === 'P2002')
       return res.status(400).send('SKU ou Código de Barras já existem.');
-    }
-    res.status(500).send('Erro interno do servidor.');
+    return res.status(500).send('Erro interno do servidor.');
   }
-};
+}
 
-const insertNewProduct = async (product, userid) => {
-  try {
-    const result = await pool.query(
-      `INSERT INTO stockVariant (SKU, Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda,
-              Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem,
-              Link_do_Video, NCM, CEST, Unidade, Origem, Tamanho, Cor, Adicionar, userid)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
-      [product.SKU, product.Nome_do_Produto, product.Apelido_do_Produto, product.Categorias, product.Codigo_de_Barras, product.Data_de_Lancamento, product.Status_da_Venda,
-      product.Vendedor, product.Preco_de_Varejo, product.Custo_de_Compra, product.Descricao, product.Link_do_Fornecedor, product.Brand, product.Peso_do_Pacote, product.Tamanho_de_Embalagem,
-      product.Link_do_Video, product.NCM, product.CEST, product.Unidade, product.Origem, product.Tamanho, product.Cor, product.Adicionar, userid]
-    );
+// Rota para criar um novo item no estoque KIT
+export async function productKitStock(req, res) {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).send('Usuário não autenticado.');
 
-    return result;
-  } catch (error) {
-    throw error;
-  }
-};
+  const {
+    SKUKIT,
+    SKU,
+    Nome_do_Produto,
+    Apelido_do_Produto,
+    Categorias,
+    Custo_de_Compra,
+    Status_da_Venda,
+    SkuMercado,
+    quantidade = 0,
+  } = req.body;
 
-// Rota para criar um novo item no estoque
-const productKitStock = async (req, res) => {
-  try {
-    const userid = GetUserId();
+  if (!SKUKIT || !SKU || !Nome_do_Produto)
+    return res.status(400).send('Campos obrigatórios faltando.');
 
-    const body = {
-      SKUKIT: req.body.SKUKIT,
-      SKU: req.body.SKU,
-      Nome_do_Produto: req.body.Nome_do_Produto,
-      Apelido_do_Produto: req.body.Apelido_do_Produto,
-      Categorias: req.body.Categorias,
-      Custo_de_Compra: req.body.Custo_de_Compra || 40, // Corrigido o nome do campo
-      Status_da_Venda: req.body.Status_da_Venda,
-      SkuMercado: req.body.SkuMercado,
-      quantidade: req.body.quantidade || 100,
-    };
-
-    console.log(body)
-    // Verifica se todos os campos obrigatórios estão presentes
-    if (!body.SKU || !body.Nome_do_Produto || !body.Custo_de_Compra || !userid) {
-      return res.status(400).send('Por favor, forneça todos os campos obrigatórios.');
-    }
-  
-    // Verificar se SKU é uma matriz e concatená-la com vírgulas
-    let SKU = body.SKU;
-    if (Array.isArray(SKU)) {
-      SKU = SKU.join(', ');
-    }
-
-    // Verificar se Custo_de_Compra é uma matriz e concatená-la com vírgulas
-    let Custo_de_Compra = body.Custo_de_Compra;
-    if (Array.isArray(Custo_de_Compra)) {
-      Custo_de_Compra = Custo_de_Compra.map(value => parseFloat(value)); // Convertendo os valores para números
-      Custo_de_Compra = Custo_de_Compra.join(', ');
-    }
-
-    // Verificar se SkuMercado é uma matriz e concatená-la com vírgulas
-    let skuMercado = body.SkuMercado;
-    if (Array.isArray(skuMercado)) {
-      skuMercado = skuMercado.join(', ');
-    }
-
-    // Insere o produto no banco de dados
-    const result = await pool.query(
-      `INSERT INTO stockKit (SKUKIT, SKU, Nome_do_Produto, Apelido_do_Produto, Categorias, Custo_de_Compra, Quantidade, Status_da_Venda, SkuMercado, userid)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [body.SKUKIT, SKU, body.Nome_do_Produto, body.Apelido_do_Produto, body.Categorias, Custo_de_Compra, body.quantidade, body.Status_da_Venda, skuMercado, userid]
-    );
-
-    res.status(201).send('Item adicionado ao estoque.');
-  } catch (error) {
-    console.error('Erro ao adicionar item:', error);
-    if (error.code === '23505') { // Erro de violação de restrição de chave única
-      return res.status(400).send('SKU ou Código de Barras já existem.');
-    }
-    res.status(500).send('Erro interno do servidor.');
-  }
-};
-
-
-
-
-// // Rota para obter todos os itens do estoque
-const getProductStock = async (req, res) => {
-  const userid = GetUserId();
+  // trata arrays
+  const skuTexto = Array.isArray(SKU) ? SKU.join(', ') : SKU;
+  const custoTexto = Array.isArray(Custo_de_Compra)
+    ? Custo_de_Compra.map(v => parseFloat(v)).join(', ')
+    : Custo_de_Compra;
+  const skumerTexto = Array.isArray(SkuMercado)
+    ? SkuMercado.join(', ')
+    : SkuMercado;
 
   try {
-    const result = await pool.query(`SELECT * FROM stock WHERE userid = $1`, [userid]);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Erro ao obter itens do estoque:', error);
-    res.status(500).send('Erro interno do servidor.');
+    await prisma.stockKit.create({
+      data: {
+        skukit: SKUKIT,
+        sku: skuTexto,
+        nome_do_produto: Nome_do_Produto,
+        apelido_do_produto: Apelido_do_Produto,
+        categorias: Categorias,
+        custo_de_compra: parseFloat(custoTexto),
+        quantidade,
+        status_da_venda: Status_da_Venda,
+        skumercado: skumerTexto,
+        userId,
+      },
+    });
+    return res.status(201).send('Kit adicionado ao estoque.');
+  } catch (err) {
+    console.error('Erro ao adicionar kit:', err);
+    if (err.code === 'P2002')
+      return res.status(400).send('Chave única violada.');
+    return res.status(500).send('Erro interno do servidor.');
   }
-};
+}
+
+// Rota para obter todos os itens do estoque
+export async function getProductStock(req, res) {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ message: 'Usuário não autenticado.' });
+
+  try {
+    const estoque = await prisma.stock.findMany({ where: { userId } });
+    return res.json(estoque);
+  } catch (err) {
+    console.error('Erro ao obter itens do estoque:', err);
+    return res.status(500).send('Erro interno do servidor.');
+  }
+}
+
+
 
 
 
@@ -340,12 +364,3 @@ const getProductStock = async (req, res) => {
 //     res.status(500).send('Erro interno do servidor.');
 //   }
 // });
-
-
-module.exports = {
-  productStock,
-  productVariStockVariant,
-  productKitStock,
-  getProductStock,
-  editProductStock
-};

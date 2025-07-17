@@ -1,21 +1,17 @@
-let userId = ''
+let _userId = '';
 
-exports.userId = async (req, res) => {
-    try {
-        //recebendo userid do front end
-        const saveUserid = req.body.userid;
+export async function setUserId(req, res) {
+  try {
+    const { userid } = req.body;
+    _userId = userid;
+    console.log('UserId salvo:', _userId);
+    return res.status(200).json({ message: `UserId: ${_userId}` });
+  } catch (error) {
+    console.error('Erro ao salvar UserId:', error);
+    return res.status(500).json({ message: 'Erro ao processar a solicitação.' });
+  }
+}
 
-        userId = saveUserid;
-
-        console.log(userId)
-        res.status(200).json({ message: `UserId: ${saveUserid}` });
-
-    } catch (error) {
-        console.error('Erro:', error);
-        res.status(500).json({ message: 'Erro ao processar a solicitação.' });
-    }
-};
-
-exports.GetUserId = () => {
-    return userId;
-};
+export function getUserId() {
+  return _userId;
+}

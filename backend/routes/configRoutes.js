@@ -1,9 +1,8 @@
-const express = require('express');
-const configController = require('../controllers/configController.js');
+import { Router } from "express";
+import { createCompanyInformation } from "../controllers/configController.js";
 
-const router = express.Router();
+const router = Router();
 
-router.post('/enterprise', configController.createCompanyInformation);
+router.post("/enterprise", createCompanyInformation);
 
-
-module.exports = router;
+export default router;

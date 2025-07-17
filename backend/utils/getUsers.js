@@ -1,24 +1,25 @@
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
+import pool from '../bd.js';
+import { getUserId } from './verifyToken.js';
+
 dotenv.config();
-const pool = require('../bd.js');
-const { GetUserId } = require('./verifyToken.js');
 
+export async function getUserIdBd(req, res) {
+  try {
+    // Obtém o ID do usuário a partir do token (ou variável global)
+    const userid = parseInt(getUserId(), 10);
+    console.log('UserID obtido:', userid);
 
-//Get User por Id no Banco
-const getUserIdBd = async (req, res) => {
-    try {
-        const userid = parseInt(GetUserId()); // Supondo que você tenha uma função para obter o ID do usuário
-        console.log(userid)
-        const user = await pool.query('SELECT * FROM users WHERE userid = $1', [userid]);
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE userid = $1',
+      [userid]
+    );
 
-        res.status(200).json({ user: user.rows });
-    } catch (error) {
-        console.error('Erro:', error);
-        res.status(500).json({ message: 'Erro ao recuperar os Users do banco de dados.' });
-    }
-};
-
-
-module.exports = {
-    getUserIdBd,
-};
+    return res.status(200).json({ user: rows });
+  } catch (error) {
+    console.error('Erro ao recuperar usuário do banco:', error);
+    return res
+      .status(500)
+      .json({ message: 'Erro ao recuperar os Users do banco de dados.' });
+  }
+}

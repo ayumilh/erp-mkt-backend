@@ -1,19 +1,13 @@
-const express = require('express');
-const authShopee = require('../../controllers/auth/shopee/authShopee.js');
-const productsShopee = require('../../controllers/auth/shopee/productsShopee.js');
+import { Router } from 'express';
+import { shopeeAuth } from '../../controllers/auth/shopee/authShopee.js';
+import { shopeeGetProductsSync } from '../../controllers/auth/shopee/productsShopee.js';
 
-const router = express.Router();
+const router = Router();
 
-// AUTENTICAÇÃO
-// router.get('/auth', authShopee.redirectToShopeeAuth);
-router.post('/redirect', authShopee.shopeeAuth); //passei
+// Autenticação
+router.post('/redirect', shopeeAuth);
 
-//Produtos
-router.get('/productsSync', productsShopee.shopeeGetProductsSync);
+// Produtos
+router.get('/productsSync', shopeeGetProductsSync);
 
-
-
-
-
-
-module.exports = router;
+export default router;

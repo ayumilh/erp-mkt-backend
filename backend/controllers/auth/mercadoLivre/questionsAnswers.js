@@ -1,5 +1,6 @@
-const pool = require('../../../bd.js');
-const { GetUserId } = require('../../../utils/verifyToken.js');
+import pool from '../../../bd.js'
+import { getUserId } from '../../../utils/verifyToken.js'
+
 
 const validaToken = async (userid) => {
 
@@ -25,7 +26,7 @@ const validaIdUserMercado = async (userid) => {
     }
 }
 
-const mercadoLivreGetQuestionsSync = async (req, res) => {
+export async function mercadoLivreGetQuestionsSync (req, res) {
     try {
         const userid = req.query.userId;
         const user_mercado = await validaIdUserMercado(userid);
@@ -162,7 +163,7 @@ const mercadoLivreGetQuestionsSync = async (req, res) => {
     }
 };
 
-const mercadoLivreGetQuestionsAnswersWithProducts = async (req, res) => {
+export async function mercadoLivreGetQuestionsAnswersWithProducts (req, res) {
     try {
         
         const userid = req.query.userId;
@@ -206,9 +207,3 @@ const mercadoLivreGetQuestionsAnswersWithProducts = async (req, res) => {
         res.status(500).json({ message: 'Erro ao recuperar as perguntas e respostas do banco de dados.' });
     }
 };
-
-module.exports = {
-    mercadoLivreGetQuestionsSync,
-    mercadoLivreGetQuestionsAnswersWithProducts
-};
-

@@ -1,8 +1,8 @@
-const pool = require('../bd.js');
-const { GetUserId } = require('../utils/verifyToken.js');
+import pool from '../bd.js';
+import { getUserId } from '../utils/verifyToken.js';
 
 const validaToken = async () => {
-    const userid = GetUserId();
+    const userid = getUserId();
 
     const result = await pool.query(`SELECT access_token FROM usermercado WHERE userid = ${userid}`);
 
@@ -15,7 +15,7 @@ const validaToken = async () => {
 }
 
 const validaIdUserMercado = async () => {
-    const userid = GetUserId();
+    const userid = getUserId();
 
     const result = await pool.query(`SELECT user_mercado_id FROM usermercado WHERE userid = ${userid}`);
 
@@ -27,10 +27,9 @@ const validaIdUserMercado = async () => {
     }
 }
 
-
-const createCompanyInformation = async (req, res) => {
+export async function createCompanyInformation (req, res) {
     try {
-        const userid = GetUserId(); // Assuming this function fetches the logged-in user's ID.
+        const userid = getUserId(); // Assuming this function fetches the logged-in user's ID.
         const {
             cnpj,
             serial_number,
@@ -98,8 +97,3 @@ const createCompanyInformation = async (req, res) => {
         res.status(500).json({ message: 'Failed to add company information to the database.' });
     }
 };
-
-module.exports = {
-    createCompanyInformation
-};
-

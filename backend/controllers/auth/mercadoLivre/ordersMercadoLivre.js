@@ -1,5 +1,6 @@
-const pool = require('../../../bd.js');
-const { GetUserId } = require('../../../utils/verifyToken.js');
+import pool from '../../../bd.js'
+import { getUserId } from '../../../utils/verifyToken.js'
+
 
 const validaToken = async (userid) => {
 
@@ -26,7 +27,7 @@ const validaIdUserMercado = async (userid) => {
 }
 
 //SYNC PEDIDOS MERCADO LIVRE
-const mercadoLivreGetAllOrders = async (req, res) => {
+export async function mercadoLivreGetAllOrders (req, res) {
     try {
         const userid = req.query.userId;
         const userMercado = await validaIdUserMercado(userid);
@@ -249,7 +250,7 @@ const mercadoLivreGetAllOrders = async (req, res) => {
 
 
 //Get Pedidos All Pedidos no Banco
-const mercadoLivreGetBdOrders = async (req, res) => {
+export async function mercadoLivreGetBdOrders (req, res) {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
@@ -293,7 +294,7 @@ const mercadoLivreGetBdOrders = async (req, res) => {
 };
 
 //Get Pedidos All Pedidos Aprovado no Banco para Emitir
-const mercadoLivreGetApproved = async (req, res) => {
+export async function mercadoLivreGetApproved (req, res) {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
@@ -344,7 +345,7 @@ const mercadoLivreGetApproved = async (req, res) => {
 };
 
 //Get Pedidos All Pedidos Ready no Banco - Pedidos pronto para enviar
-const mercadoLivreGetReady = async (req, res) => {
+export async function mercadoLivreGetReady (req, res) {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
@@ -398,7 +399,7 @@ const mercadoLivreGetReady = async (req, res) => {
 };
 
 //Get Pedidos All Pedidos Ready Printed no Banco - Pedidos pronto para enviar mas já foi Impresso
-const mercadoLivreGetReadyPrinted = async (req, res) => {
+export async function mercadoLivreGetReadyPrinted (req, res) {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
@@ -444,7 +445,7 @@ const mercadoLivreGetReadyPrinted = async (req, res) => {
 };
 
 //Get Pedidos All Pedidos Delivered no Banco
-const mercadoLivreGetDelivered = async (req, res) => {
+export async function mercadoLivreGetDelivered (req, res) {
     try {
         const userid = req.query.userId;
         const searchTerm = req.query.searchTerm;
@@ -491,7 +492,7 @@ const mercadoLivreGetDelivered = async (req, res) => {
 
 
 //Post Emissão de Pedidos Selecionados
-const mercadoLivrePostNota = async (req, res) => {
+export async function mercadoLivrePostNota (req, res) {
     try {
         // Recebendo o código do frontend
         const ordersBatch = req.body.ordersBatch;
@@ -544,7 +545,7 @@ const mercadoLivrePostNota = async (req, res) => {
 };
 
 //impressão Etiqueta
-const mercadoLivreGetPrint = async (req, res) => {
+export async function mercadoLivreGetPrint (req, res) {
     try {
         const userid = req.body.userId;
         console.log('SHIPPING IDS:', req.body)
@@ -603,7 +604,7 @@ const mercadoLivreGetPrint = async (req, res) => {
 };
 
 
-const mercadoLivreGetOrdersDetailsId = async (req, res) => {
+export async function mercadoLivreGetOrdersDetailsId (req, res) {
     try {
         const { shippingIds, userId } = req.query;
 
@@ -645,7 +646,7 @@ const mercadoLivreGetOrdersDetailsId = async (req, res) => {
     }
 };
 
-const mercadoLivreGetCounts = async (req, res) => {
+export async function mercadoLivreGetCounts (req, res) {
     try {
         const userid = req.query.userId;
 
@@ -794,19 +795,4 @@ const mercadoLivreGetCounts = async (req, res) => {
 //         res.status(500).json({ message: 'Erro ao processar a solicitação de Produtos.' });
 //     }    
 // };
-
-
-
-module.exports = {
-    mercadoLivreGetAllOrders,
-    mercadoLivreGetBdOrders,
-    mercadoLivrePostNota,
-    mercadoLivreGetApproved,
-    mercadoLivreGetReady,
-    mercadoLivreGetPrint,
-    mercadoLivreGetDelivered,
-    mercadoLivreGetReadyPrinted,
-    mercadoLivreGetCounts,
-    mercadoLivreGetOrdersDetailsId
-};
 
