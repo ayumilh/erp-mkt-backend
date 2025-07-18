@@ -19,7 +19,7 @@ import statistics from "./routes/utils/statistics.js";
 import shopeeRoutes from "./routes/shopee/shopeeRoutes.js";
 
 const allowedOrigins = [
-  "https://toquasetedando.com",
+  "https://erp-mkt-frontend.vercel.app",
   "http://localhost:3000"
 ];
 
