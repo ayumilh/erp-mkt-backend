@@ -1,8 +1,6 @@
 import dotenv from 'dotenv'
 dotenv.config()
-
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import prisma from '../../../prisma/client.js'
 
 const clientId = process.env.CLIENT_ID
 const clientSecret = process.env.CLIENT_SECRET

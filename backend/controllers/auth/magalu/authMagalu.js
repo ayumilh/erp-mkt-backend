@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import pool from "../../../bd.js";
-import { getUserId } from "../../../utils/verifyToken.js";
 
 const clientId = process.env.CLIENT_ID_MAGALU;
 const clientSecret = process.env.CLIENT_SECRET_MAGALU;
@@ -14,10 +13,7 @@ export async function magaluAuth (req, res) {
     try {
         //recebendo code do front end
         const code = req.body.code;
-        console.log('TOKEN:', code);
-
-        const userid = getUserId();
-        console.log(userid);
+        const userid = req.user?.id;
 
         const response = await fetch('https://id.magalu.com/oauth/token', { 
             method: 'POST',

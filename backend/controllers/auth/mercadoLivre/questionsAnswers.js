@@ -1,12 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { getUserId } from '../../../utils/verifyToken.js';
-
-const prisma = new PrismaClient();
+import prisma from "../../../prisma/client.js";
 
 // Sincroniza perguntas e respostas do Mercado Livre
 export async function mercadoLivreGetQuestionsSync(req, res) {
   try {
-    const userId = getUserId(req);
+    const userId = req.user?.id
     if (!userId) return res.status(401).json({ message: 'Usuário não autenticado.' });
 
     // Busca IDs dos mercados vinculados e token de acesso
@@ -102,7 +99,7 @@ export async function mercadoLivreGetQuestionsSync(req, res) {
 // Busca perguntas com dados de produtos associados
 export async function mercadoLivreGetQuestionsAnswersWithProducts(req, res) {
   try {
-    const userId = getUserId(req);
+    const userId = req.user?.id
     if (!userId) return res.status(401).json({ message: 'Usuário não autenticado.' });
 
     const records = await prisma.questionsAnswer.findMany({

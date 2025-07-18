@@ -1,11 +1,8 @@
-import { PrismaClient } from '@prisma/client'
-import { getUserId } from './verifyToken.js'
-
-const prisma = new PrismaClient()
+import prisma from '../prisma/client.js'
 
 // Função para obter estatísticas de pedidos
 export async function salesstatistics(req, res) {
-  const userId = getUserId()  
+  const userId = req.user?.id 
   if (!userId) {
     return res.status(401).json({ message: 'Usuário não autenticado.' })
   }
@@ -38,7 +35,7 @@ export async function salesstatistics(req, res) {
 
 // Função para obter detalhes de vendas Realync
 export async function statisticsRealync(req, res) {
-  const userId = getUserId()
+  const userId = req.user?.id
   if (!userId) {
     return res.status(401).json({ message: 'Usuário não autenticado.' })
   }

@@ -1,182 +1,162 @@
 import cron from 'node-cron'
-import pool from '../bd.js'
 import dotenv from 'dotenv'
-dotenv.config();
+import prisma from '../prisma/client.js'
+dotenv.config()
 
-const clientId_magalu = process.env.CLIENT_ID_MAGALU;
-const clientSecret_magalu = process.env.CLIENT_SECRET_MAGALU;
-
-
-//REFRESH TOKEN MERCADO LIVRE
+// ── MercadoLibre ────────────────────────────────────────────────────────────────
 export async function atualizarRefreshTokenMercadoLivre() {
-    try {
-        // Buscar todos os registros da tabela usermercado
-        const queryResult = await pool.query('SELECT user_mercado_id, refresh_token, access_token FROM usermercado');
+  try {
+    const records = await prisma.userMercado.findMany({
+      select: { user_mercado_id: true, refresh_token: true, access_token: true }
+    })
 
-        // Iterar sobre os resultados e atualizar cada refresh token
-        for (const row of queryResult.rows) {
-            const refreshToken = row.refresh_token;
-            const accessToken = row.access_token;
-            console.log(refreshToken)
-            console.log(accessToken)
+    for (const { user_mercado_id, refresh_token } of records) {
+      const res = await fetch('https://api.mercadolibre.com/oauth/token', {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id:  process.env.CLIENT_ID,
+          client_secret: process.env.CLIENT_SECRET,
+          refresh_token,
+        })
+      })
 
-            // Fazer solicitação para atualizar o token
-            const response = await fetch('https://api.mercadolibre.com/oauth/token', {
-                method: 'POST',
-                headers: {
-                    'accept': 'application/json',
-                    'content-type': 'application/x-www-form-urlencoded'
-                },
-                body: `grant_type=refresh_token&client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&refresh_token=${refreshToken}`
-            });
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error_description || 'Falha ao atualizar token ML')
+      }
 
+      const { refresh_token: newRefresh, access_token: newAccess } =
+        await res.json()
 
-            if (response.ok) {
-                const responseData = await response.json();
-                const updatedRefreshToken = responseData.refresh_token;
-                const updatedAccessToken = responseData.access_token;
-
-                // Atualizar o refresh token no banco de dados
-                await pool.query('UPDATE usermercado SET refresh_token = $1, access_token = $2 WHERE user_mercado_id = $3', [updatedRefreshToken, updatedAccessToken, row.user_mercado_id]);
-                console.log('Refresh Token Atualizado Mercado Livre >>', updatedRefreshToken + ' Access Token:', updatedAccessToken)
-            } else {
-                const errorData = await response.json(); // Tenta extrair informações do corpo da resposta
-                let errorMessage = 'Erro na solicitação do token Mercado Livre';
-                if (errorData && errorData.error_description) {
-                    errorMessage = errorData.error_description; // Se houver uma mensagem de erro na resposta, usar ela
-                }
-                throw new Error(errorMessage);
-            }
+      await prisma.userMercado.update({
+        where: { user_mercado_id },
+        data: {
+          refresh_token: newRefresh,
+          access_token:  newAccess
         }
-    } catch (error) {
-        console.error('Erro ao atualizar refresh tokens do Mercado Livre:', error);
+      })
+
+      console.log(
+        'ML tokens updated for',
+        user_mercado_id,
+        '→',
+        newRefresh,
+        newAccess
+      )
     }
+  } catch (e) {
+    console.error('Erro ML refresh:', e)
+  }
 }
 
-// =========================================================================================================================================================================//
-
-//REFRESH TOKEN Magalu
-
+// ── Magalu ──────────────────────────────────────────────────────────────────────
 export async function atualizarRefreshTokenMagalu() {
-    try {
-        // Buscar todos os registros da tabela usermagalu
-        const queryResult = await pool.query('SELECT user_magalu_id, access_token, refresh_token FROM usermagalu');
+  try {
+    const records = await prisma.userMagalu.findMany({
+      select: { user_magalu_id: true, refresh_token: true }
+    })
 
-        // Iterar sobre os resultados e atualizar cada refresh token
-        for (const row of queryResult.rows) {
-            const refreshToken = row.refresh_token;
-            const accessToken = row.access_token;
-            console.log(refreshToken, accessToken)
+    for (const { user_magalu_id, refresh_token } of records) {
+      const res = await fetch('https://id.magalu.com/oauth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id:     process.env.CLIENT_ID_MAGALU,
+          client_secret: process.env.CLIENT_SECRET_MAGALU,
+          grant_type:    'refresh_token',
+          refresh_token
+        })
+      })
 
-            // Fazer solicitação para atualizar o token
-            const response = await fetch('https://id.magalu.com/oauth/token', { 
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    "client_id": clientId_magalu,
-                    "client_secret": clientSecret_magalu,
-                    "refresh_token": refreshToken,
-                    "grant_type": "refresh_token"
-                })
-            });
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error_description || 'Falha no token Magalu')
+      }
 
-            if (response.ok) {
-                const responseData = await response.json();
-                const updatedRefreshToken = responseData.refresh_token;
-                const updatedAccessToken = responseData.access_token;
+      const { refresh_token: newRefresh, access_token: newAccess } =
+        await res.json()
 
-                // Atualizar o refresh token no banco de dados
-                await pool.query('UPDATE usermagalu SET refresh_token = $1, access_token = $2  WHERE user_magalu_id = $3', [updatedRefreshToken, updatedAccessToken, row.user_magalu_id]);
-                console.log(`Refresh Token Atualizado Magalu>> ${updatedRefreshToken} Access Token>> ${updatedAccessToken}`)
-            } else {
-                const errorData = await response.json(); // Tenta extrair informações do corpo da resposta
-                let errorMessage = 'Erro na solicitação do token Magalu';
-                if (errorData && errorData.error_description) {
-                    errorMessage = errorData.error_description; // Se houver uma mensagem de erro na resposta, usar ela
-                }
-                throw new Error(errorMessage);
-            }
+      await prisma.userMagalu.update({
+        where: { user_magalu_id },
+        data: {
+          refresh_token: newRefresh,
+          access_token:  newAccess
         }
-    } catch (error) {
-        console.error('Erro ao atualizar refresh tokens do Magalu:', error);
+      })
+
+      console.log(
+        'Magalu tokens updated for',
+        user_magalu_id,
+        '→',
+        newRefresh,
+        newAccess
+      )
     }
+  } catch (e) {
+    console.error('Erro Magalu refresh:', e)
+  }
 }
 
-// Função para atualizar o refresh token da Shopee
+// ── Shopee ──────────────────────────────────────────────────────────────────────
 export async function atualizarRefreshTokenShopee() {
-    try {
-        // Buscar todos os registros que precisam de atualização de token
-        const queryResult = await pool.query('SELECT user_shopee_id, refresh_token FROM user_shopee');
+  try {
+    const records = await prisma.userShopee.findMany({
+      select: { user_shop_id: true, refresh_token: true }
+    })
 
-        // Iterar sobre cada registro e atualizar o refresh token
-        for (const row of queryResult.rows) {
-            const { refresh_token, user_shopee_id } = row;
-
-            // Fazer a solicitação para atualizar o token
-            const response = await fetch('https://partner.shopeemobile.com/api/v2/auth/access_token/get', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    partner_id: process.env.SHOPEE_PARTNER_ID,
-                    shop_id: process.env.SHOPEE_SHOP_ID,
-                    refresh_token: refresh_token
-                })
-            });
-
-            if (response.ok) {
-                const responseData = await response.json();
-                const updatedRefreshToken = responseData.refresh_token;
-                const updatedAccessToken = responseData.access_token;
-
-                // Atualizar o refresh token no banco de dados
-                await pool.query(
-                    'UPDATE user_shopee SET refresh_token = $1, access_token = $2 WHERE user_shopee_id = $3',
-                    [updatedRefreshToken, updatedAccessToken, user_shopee_id]
-                );
-
-                console.log('Shopee Refresh Token Atualizado:', updatedRefreshToken, 'Access Token:', updatedAccessToken);
-            } else {
-                const errorData = await response.json();
-                console.error('Erro na solicitação de token Shopee:', errorData.message || 'Erro desconhecido');
-            }
+    for (const { user_shop_id, refresh_token } of records) {
+      const res = await fetch(
+        'https://partner.shopeemobile.com/api/v2/auth/access_token/get',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            partner_id:  process.env.SHOPEE_PARTNER_ID,
+            shop_id:     process.env.SHOPEE_SHOP_ID,
+            refresh_token
+          })
         }
-    } catch (error) {
-        console.error('Erro ao atualizar refresh tokens da Shopee:', error);
+      )
+
+      if (!res.ok) {
+        const err = await res.json()
+        console.error('Erro Shopee token:', err)
+        continue
+      }
+
+      const { refresh_token: newRefresh, access_token: newAccess } =
+        await res.json()
+
+      await prisma.userShopee.update({
+        where: { user_shop_id },
+        data: {
+          refresh_token: newRefresh,
+          access_token:  newAccess
+        }
+      })
+
+      console.log(
+        'Shopee tokens updated for',
+        user_shop_id,
+        '→',
+        newRefresh,
+        newAccess
+      )
     }
+  } catch (e) {
+    console.error('Erro Shopee refresh:', e)
+  }
 }
 
-
-
-//AGENDADOR DO REFRESH
-
-// Agendar a execução da função a cada 5 horas
-// cron.schedule('0 */1 * * *', () => {
-//     console.log('Executando atualização de refresh tokens...');
-//     atualizarRefreshTokenMercadoLivre();
-//     atualizarRefreshTokenMagalu();
-// });
-
-// A cada 1min para testes
-// exports.cron.schedule('0 */3 * * *', () => {
-//     console.log('Executando atualização de refresh tokens...');
-//     atualizarRefreshTokenMercadoLivre();
-//         // atualizarRefreshTokenMagalu();
-//     });
-     
-
-// cron.schedule('0 * * * *', () => {
-//     console.log('Executando atualização de refresh tokens da Shopee...');
-//     atualizarRefreshTokenShopee();
-// });
-
-// A cada 1min para testes
-// cron.schedule('*/1 * * * *', () => {
-// console.log('Executando atualização de refresh tokens...');
-// atualizarRefreshTokenMercadoLivre();
-//     atualizarRefreshTokenShopee();
-//     // atualizarRefreshTokenMagalu();
-// });
- 
-
+// ── Cron schedule ───────────────────────────────────────────────────────────────
+cron.schedule('0 */5 * * *', () => {
+  console.log('Running token refresher…')
+  atualizarRefreshTokenMercadoLivre()
+  atualizarRefreshTokenMagalu()
+  atualizarRefreshTokenShopee()
+})

@@ -1,25 +1,36 @@
-import dotenv from 'dotenv';
-import pool from '../bd.js';
-import { getUserId } from './verifyToken.js';
-
-dotenv.config();
+import dotenv from 'dotenv'
+import prisma from '../prisma/client.js'
+dotenv.config()
 
 export async function getUserIdBd(req, res) {
+  const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Usuário não autenticado.' })
+  }
+
   try {
-    // Obtém o ID do usuário a partir do token (ou variável global)
-    const userid = parseInt(getUserId(), 10);
-    console.log('UserID obtido:', userid);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        emailVerified: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
 
-    const { rows } = await pool.query(
-      'SELECT * FROM users WHERE userid = $1',
-      [userid]
-    );
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' })
+    }
 
-    return res.status(200).json({ user: rows });
+    return res.status(200).json({ user })
   } catch (error) {
-    console.error('Erro ao recuperar usuário do banco:', error);
+    console.error('Erro ao recuperar usuário do banco:', error)
     return res
       .status(500)
-      .json({ message: 'Erro ao recuperar os Users do banco de dados.' });
+      .json({ message: 'Erro ao recuperar os usuários do banco de dados.' })
   }
 }

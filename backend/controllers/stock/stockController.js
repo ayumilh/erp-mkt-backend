@@ -330,36 +330,3 @@ export async function getProductStock(req, res) {
     return res.status(500).send('Erro interno do servidor.');
   }
 }
-
-
-
-
-
-// // Rota para atualizar um item no estoque
-// app.put('/estoque/:SKU', async (req, res) => {
-//   const { SKU } = req.params;
-//   const { Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda, Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem, Link_do_Video, NCM, CEST, Unidade, Origem } = req.body;
-
-//   try {
-//     const result = await pool.query('UPDATE Estoque SET Nome_do_Produto = $1, Apelido_do_Produto = $2, Categorias = $3, Codigo_de_Barras = $4, Data_de_Lancamento = $5, Status_da_Venda = $6, Vendedor = $7, Preco_de_Varejo = $8, Custo_de_Compra = $9, Descricao = $10, Link_do_Fornecedor = $11, Brand = $12, Peso_do_Pacote = $13, Tamanho_de_Embalagem = $14, Link_do_Video = $15, NCM = $16, CEST = $17, Unidade = $18, Origem = $19 WHERE SKU = $20',
-//       [Nome_do_Produto, Apelido_do_Produto, Categorias, Codigo_de_Barras, Data_de_Lancamento, Status_da_Venda, Vendedor, Preco_de_Varejo, Custo_de_Compra, Descricao, Link_do_Fornecedor, Brand, Peso_do_Pacote, Tamanho_de_Embalagem, Link_do_Video, NCM, CEST, Unidade, Origem, SKU]);
-
-//     res.send('Item do estoque atualizado.');
-//   } catch (error) {
-//     console.error('Erro ao atualizar item do estoque:', error);
-//     res.status(500).send('Erro interno do servidor.');
-//   }
-// });
-
-// // Rota para deletar um item do estoque
-// app.delete('/estoque/:SKU', async (req, res) => {
-//   const { SKU } = req.params;
-
-//   try {
-//     const result = await pool.query('DELETE FROM Estoque WHERE SKU = $1', [SKU]);
-//     res.send('Item do estoque excluído.');
-//   } catch (error) {
-//     console.error('Erro ao excluir item do estoque:', error);
-//     res.status(500).send('Erro interno do servidor.');
-//   }
-// });

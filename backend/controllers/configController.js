@@ -1,99 +1,55 @@
-import pool from '../bd.js';
-import { getUserId } from '../utils/verifyToken.js';
+import prisma from '../prisma/client.js'
 
-const validaToken = async () => {
-    const userid = getUserId();
+export async function createCompanyInformation(req, res) {
+  const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Usuário não autenticado.' })
+  }
 
-    const result = await pool.query(`SELECT access_token FROM usermercado WHERE userid = ${userid}`);
+  const {
+    cnpj,
+    serial_number,
+    company_name,
+    tax_type,
+    company_type,
+    state_registration,
+    email,
+    postal_code,
+    address,
+    address_number,
+    neighborhood,
+    city,
+    state,
+  } = req.body
 
-    if (result.rows.length > 0) {
-        const accessToken = result.rows[0].access_token;
-        return accessToken;
-    } else {
-        throw new Error('Usuário não encontrado ou token não definido');
-    }
+  try {
+    const company = await prisma.companyInformation.create({
+      data: {
+        cnpj,
+        serial_number,
+        company_name,
+        tax_type,
+        company_type,
+        state_registration,
+        email,
+        postal_code,
+        address,
+        address_number,
+        neighborhood,
+        city,
+        state,
+        userId,
+      },
+    })
+
+    return res.status(201).json({
+      message: 'Company information added successfully.',
+      company, // já traz todos os campos, inclusive serial_number
+    })
+  } catch (error) {
+    console.error('Erro ao criar companyInformation:', error)
+    return res
+      .status(500)
+      .json({ message: 'Failed to add company information to the database.' })
+  }
 }
-
-const validaIdUserMercado = async () => {
-    const userid = getUserId();
-
-    const result = await pool.query(`SELECT user_mercado_id FROM usermercado WHERE userid = ${userid}`);
-
-    if (result.rows.length > 0) {
-        const user_mercado_ids = result.rows.map(row => row.user_mercado_id);
-        return user_mercado_ids;
-    } else {
-        throw new Error('Usuário não encontrado ou token não definido');
-    }
-}
-
-export async function createCompanyInformation (req, res) {
-    try {
-        const userid = getUserId(); // Assuming this function fetches the logged-in user's ID.
-        const {
-            cnpj,
-            serial_number,
-            company_name,
-            tax_type,
-            company_type,
-            state_registration,
-            email,
-            postal_code,
-            address,
-            address_number,
-            neighborhood,
-            city,
-            state
-        } = req.body;
-
-        // Insert company information into the database, including serial_number which will auto-increment
-        const query = `
-            INSERT INTO companyInformation (
-                cnpj, 
-                serial_number,
-                company_name, 
-                tax_type, 
-                company_type, 
-                state_registration, 
-                email, 
-                postal_code, 
-                address, 
-                address_number, 
-                neighborhood, 
-                city, 
-                state, 
-                userid
-            ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-            )
-            RETURNING *;
-        `;
-
-        const values = [
-            cnpj,
-            serial_number,
-            company_name,
-            tax_type,
-            company_type,
-            state_registration,
-            email,
-            postal_code,
-            address,
-            address_number,
-            neighborhood,
-            city,
-            state,
-            userid
-        ];
-
-        const result = await pool.query(query, values);
-
-        res.status(201).json({
-            message: 'Company information added successfully.',
-            company: result.rows[0] // The serial_number will also be included in the returned rows
-        });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Failed to add company information to the database.' });
-    }
-};

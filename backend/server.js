@@ -20,7 +20,7 @@ import shopeeRoutes from "./routes/shopee/shopeeRoutes.js";
 
 const allowedOrigins = [
   "https://toquasetedando.com",
-  "http://localhost:3001"
+  "http://localhost:3000"
 ];
 
 const app = express();

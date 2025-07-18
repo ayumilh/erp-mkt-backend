@@ -1,23 +1,24 @@
-import pool from '../../bd.js'
-import { getUserId } from '../../utils/verifyToken.js'
+import prisma from '../../prisma/client.js';
 
-
-
-export async function getProductByIdSKU (req, res) {
-    const userid = getUserId();
+export async function getProductByIdSKU(req, res) {
+    const userId = req.user?.id;
     const sku = req.params.sku; // Supondo que o SKU seja passado como parâmetro na URL
 
-    try {
-        const result = await pool.query(
-            `SELECT * FROM stock WHERE userid = $1 AND SKU = $2`,
-            [userid, sku]
-        );
+    if (!userId) return res.status(401).send('Usuário não autenticado.');
 
-        if (result.rows.length === 0) {
-            return res.status(404).send('Produto não encontrado.');
+    try {
+        const stockItem = await prisma.stock.findFirst({
+            where: {
+                userId,
+                sku: sku
+            }
+        });
+
+        if (!stockItem) {
+            return res.status(404).send('Produto não encontrado.')
         }
 
-        res.json(result.rows[0]);
+        return res.json(stockItem)
     } catch (error) {
         console.error('Erro ao obter o produto:', error);
         res.status(500).send('Erro interno do servidor.');
@@ -25,30 +26,39 @@ export async function getProductByIdSKU (req, res) {
 };
 
 // search Products Adicionar SKU Estoque
-export async function searchProducts (req, res) {
-    const userid = getUserId();
-    const { searchQuery } = req.query; // Parâmetro de consulta para o critério de busca
+export async function searchProducts(req, res) {
+    const userId = req.user?.id
+    const { searchQuery } = req.query
+
+    if (!userId) {
+        return res.status(401).send('Usuário não autenticado.')
+    }
 
     try {
-        let query = `SELECT SKU, nome_do_produto FROM stock WHERE userid = $1`;
-
-        // Se houver uma consulta de busca, adicione à consulta SQL
+        // Monta a cláusula `where` dinamicamente
+        const where = { userId }
         if (searchQuery) {
-            query += ` AND (SKU = $2 OR nome_do_produto ILIKE $3)`;
+            where.OR = [
+                { sku: searchQuery },
+                { nome_do_produto: { contains: searchQuery, mode: 'insensitive' } }
+            ]
         }
 
-        const params = [userid];
-        if (searchQuery) {
-            params.push(searchQuery, `%${searchQuery}%`);
-        }
+        // Busca via Prisma
+        const products = await prisma.stock.findMany({
+            where,
+            select: {
+                sku: true,
+                nome_do_produto: true
+            }
+        })
 
-        const result = await pool.query(query, params);
-        res.json(result.rows);
+        return res.json(products)
     } catch (error) {
-        console.error('Erro ao buscar itens do estoque:', error);
-        res.status(500).send('Erro interno do servidor.');
+        console.error('Erro ao buscar itens do estoque:', error)
+        return res.status(500).send('Erro interno do servidor.')
     }
-};
+}
 
 // let tempSKU = null;
 
@@ -70,45 +80,64 @@ export async function searchProducts (req, res) {
 // };
 
 // Puxar o Produto depois de Salvar na hora de Selecionar em Adicionar SKU (Kit Estoque)
-export async function getProductSolo (req, res) {
-    try {
-  
-        const userid = getUserId(); 
-        const SKUs = req.query.idProduct;
-
-        // Verificar se foram fornecidos SKUs na requisição
-        if (!SKUs || SKUs.length === 0) {
-            return res.status(400).json({ message: 'SKUs não encontrados.' });
-        }
-
-        // Inicializar um array para armazenar os resultados das consultas
-        const results = [];
-
-        // Consultar o banco de dados para cada SKU na lista
-        for (let i = 0; i < SKUs.length; i++) {
-            const SKU = SKUs[i];
-            const result = await pool.query(`SELECT SKU, custo_de_compra, quantidade FROM stock WHERE userid = $1 AND SKU = $2`, [userid, SKU]);
-            results.push(result.rows[0]); 
-        }
-
-        // Retornar os resultados das consultas
-        res.json(results);
-    } catch (error) {
-        console.error('Erro ao obter itens do estoque:', error);
-        res.status(500).send('Erro interno do servidor.');
+export async function getProductSolo(req, res) {
+    const userId = req.user?.id
+    if (!userId) {
+        return res.status(401).send('Usuário não autenticado.')
     }
-};
+
+    // Pode vir como array ou CSV na query string
+    let { idProduct } = req.query
+    if (!idProduct) {
+        return res.status(400).json({ message: 'SKUs não fornecidos.' })
+    }
+    const skus = Array.isArray(idProduct)
+        ? idProduct
+        : String(idProduct).split(',').map(s => s.trim()).filter(Boolean)
+
+    if (skus.length === 0) {
+        return res.status(400).json({ message: 'SKUs não encontrados.' })
+    }
+
+    try {
+        const results = await Promise.all(
+            skus.map(async sku => {
+                const record = await prisma.stock.findFirst({
+                    where: { sku, userId },
+                    select: {
+                        sku: true,
+                        custo_de_compra: true,
+                        quantidade: true
+                    }
+                })
+                if (!record) {
+                    // se quiser retornar erro para cada SKU faltante, pode lançar aqui
+                    return { sku, error: 'Produto não encontrado.' }
+                }
+                return record
+            })
+        )
+
+        return res.json(results)
+    } catch (error) {
+        console.error('Erro ao obter itens do estoque:', error)
+        return res.status(500).send('Erro interno do servidor.')
+    }
+}
 
 
 // Sincronização do Estoque com Plataforma
 const syncStock = async (req, res) => {
     try {
         // Usar o SKU temporariamente armazenado
-        const userid = getUserId(); 
+        const userId = req.user?.id;
         const quantidade = req.body.quantidade;
         const transito = req.body.transito;
         const disponivel = req.body.disponivel;
         const quantidade_total = req.body.quantidade_total;
+
+        if (!userId) return res.status(401).send('Usuário não autenticado.');
+
 
     } catch (error) {
         console.error('Erro ao obter itens do estoque:', error);
