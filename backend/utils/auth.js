@@ -8,5 +8,5 @@ const prisma = new PrismaClient();
 export const auth = betterAuth({
   emailAndPassword: { enabled: true },
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
-  trustedOrigins: [process.env.FRONTEND_URL || 'http://localhost:3001'],
+  trustedOrigins: ['http://localhost:3000', 'https://erp-mkt-frontend.vercel.app'],
 });
