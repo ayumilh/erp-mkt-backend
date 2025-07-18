@@ -2,7 +2,7 @@ let _userId = '';
 
 export async function setUserId(req, res) {
   try {
-    const { userid } = req.body;
+    const { userid } = req.user?.id;
     _userId = userid;
     console.log('UserId salvo:', _userId);
     return res.status(200).json({ message: `UserId: ${_userId}` });

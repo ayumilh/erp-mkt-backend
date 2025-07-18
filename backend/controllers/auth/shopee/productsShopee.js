@@ -128,7 +128,7 @@ const obterInformacoesExtrasProduto = async (shopId, partnerId, accessToken, ite
 // Função principal para sincronizar produtos com sign
 export async function shopeeGetProductsSync (req, res) {
     try {
-        const userId = req.query.userId;
+        const userId = req.user?.id;
         const partnerId = process.env.partnerIdShopee;
         const partnerKey = process.env.partnerKeyShopee;
 

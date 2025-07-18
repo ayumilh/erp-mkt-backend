@@ -18,25 +18,25 @@ router.post('/redirect', authMercadoLivre.mercadoLivreAuth);
 router.get('/productsSync', productsMercadoLivre.mercadoLivreGetProductsSync);
 router.get('/products',     productsMercadoLivre.mercadoLivreGetProducts);
 router.get('/productid',    productsMercadoLivre.mercadoLivreGetIdProduct);
-router.post(
-  '/criar-anuncio',
-  productsMercadoLivre.upload.single('file'),
-  productsMercadoLivre.mercadoLivreCreateProducts
-);
-router.put('/update-anuncio', productsMercadoLivre.mercadoLivreUpdateProducts);
+// router.post(
+//   '/criar-anuncio',
+//   productsMercadoLivre.upload.single('file'),
+//   productsMercadoLivre.mercadoLivreCreateProducts
+// );
+// router.put('/update-anuncio', productsMercadoLivre.mercadoLivreUpdateProducts);
 
 // PEDIDOS
 router.get('/ordersSync', ordersMercadoLivre.mercadoLivreGetAllOrders);
-router.post('/print',     ordersMercadoLivre.mercadoLivreGetPrint);
-router.post('/issueNote', ordersMercadoLivre.mercadoLivrePostNota);
+// router.post('/print',     ordersMercadoLivre.mercadoLivreGetPrint);
+// router.post('/issueNote', ordersMercadoLivre.mercadoLivrePostNota);
 
 // PEDIDOS TABELAS
 router.get('/orders',          ordersMercadoLivre.mercadoLivreGetBdOrders);
-router.get('/orderid-ready',   ordersMercadoLivre.mercadoLivreGetOrdersDetailsId);
-router.get('/issue',           ordersMercadoLivre.mercadoLivreGetApproved);
-router.get('/printed',         ordersMercadoLivre.mercadoLivreGetReadyPrinted);
-router.get('/ready',           ordersMercadoLivre.mercadoLivreGetReady);
-router.get('/delivered',       ordersMercadoLivre.mercadoLivreGetDelivered);
+// router.get('/orderid-ready',   ordersMercadoLivre.mercadoLivreGetOrdersDetailsId);
+// router.get('/issue',           ordersMercadoLivre.mercadoLivreGetApproved);
+// router.get('/printed',         ordersMercadoLivre.mercadoLivreGetReadyPrinted);
+// router.get('/ready',           ordersMercadoLivre.mercadoLivreGetReady);
+// router.get('/delivered',       ordersMercadoLivre.mercadoLivreGetDelivered);
 
 // NOTA FISCAL
 router.post('/export-note', notaFiscalMercadoLivre.downloadInvoices);

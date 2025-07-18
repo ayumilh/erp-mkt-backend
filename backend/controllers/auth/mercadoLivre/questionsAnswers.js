@@ -1,209 +1,143 @@
-import pool from '../../../bd.js'
-import { getUserId } from '../../../utils/verifyToken.js'
+import { PrismaClient } from '@prisma/client';
+import { getUserId } from '../../../utils/verifyToken.js';
 
+const prisma = new PrismaClient();
 
-const validaToken = async (userid) => {
+// Sincroniza perguntas e respostas do Mercado Livre
+export async function mercadoLivreGetQuestionsSync(req, res) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: 'Usuário não autenticado.' });
 
-    const result = await pool.query(`SELECT access_token FROM usermercado WHERE userid = ${userid}`);
+    // Busca IDs dos mercados vinculados e token de acesso
+    const userMercados = await prisma.userMercado.findMany({
+      where: { userId },
+      select: { userMercadoId: true, accessToken: true }
+    });
+    if (!userMercados.length) throw new Error('ID do Mercado não encontrado.');
 
-    if (result.rows.length > 0) {
-        const accessToken = result.rows[0].access_token;
-        return accessToken;
-    } else {
-        throw new Error('Usuário não encontrado ou token não definido');
-    }
-}
+    const accessToken = userMercados[0].accessToken;
+    const mercadoIds = userMercados.map(u => u.userMercadoId).join(',');
 
-const validaIdUserMercado = async (userid) => {
+    // Pega todas as perguntas
+    const questionsResponse = await fetch(
+      `https://api.mercadolibre.com/questions/search?seller_id=${mercadoIds}&sort_fields=date_created&sort_types=DESC&api_version=4`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!questionsResponse.ok) throw new Error('Erro ao buscar perguntas');
+    const { questions } = await questionsResponse.json();
 
-    const result = await pool.query(`SELECT user_mercado_id FROM usermercado WHERE userid = ${userid}`);
+    // Processa em lotes
+    const batchSize = 5;
+    for (let i = 0; i < questions.length; i += batchSize) {
+      const batch = questions.slice(i, i + batchSize);
+      await Promise.all(batch.map(async q => {
+        try {
+          // Detalhes de quem perguntou
+          const userResp = await fetch(
+            `https://api.mercadolibre.com/users/${q.from.id}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (!userResp.ok) throw new Error('Erro ao obter usuário');
+          const userData = await userResp.json();
 
-    if (result.rows.length > 0) {
-        const user_mercado_ids = result.rows.map(row => row.user_mercado_id);
-        return user_mercado_ids;
-    } else {
-        throw new Error('Usuário não encontrado ou token não definido');
-    }
-}
+          const details = {
+            questionsId:       q.id,
+            dateCreated:       new Date(q.date_created),
+            productSku:        q.item_id,
+            userMercadoId:     q.seller_id,
+            status:            q.status,
+            text:              q.text,
+            tags:              q.tags,
+            deletedFromListing:q.deleted_from_listing,
+            hold:              q.hold,
+            answerText:        q.answer?.text,
+            answerStatus:      q.answer?.status,
+            answerDateCreated: q.answer?.date_created ? new Date(q.answer.date_created) : null,
+            fromId:            q.from.id,
+            nickname:          userData.nickname,
+            registrationDate:  userData.registration_date ? new Date(userData.registration_date) : null,
+            userId
+          };
 
-export async function mercadoLivreGetQuestionsSync (req, res) {
-    try {
-        const userid = req.query.userId;
-        const user_mercado = await validaIdUserMercado(userid);
-        const access_token = await validaToken(userid);
+          const compositeKey = { questionsId: details.questionsId, userId };
+          const exists = await prisma.questionsAnswer.findUnique({ where: compositeKey });
 
-        if (!userid || !user_mercado || !access_token) {
-            throw new Error('User ID, Mercado ID, or Access Token is missing.');
-        }
-
-        // Função para buscar as perguntas da API do Mercado Livre com um timeout
-        const fetchQuestions = async () => {
-            const response = await fetch(`https://api.mercadolibre.com/questions/search?seller_id=${user_mercado}&sort_fields=date_created&sort_types=DESC&api_version=4`, {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`
-                },
-                timeout: 5000 // Timeout para a requisição
+          if (exists) {
+            await prisma.questionsAnswer.update({
+              where: compositeKey,
+              data: {
+                dateCreated: details.dateCreated,
+                productSku: details.productSku,
+                userMercadoId: details.userMercadoId,
+                status: details.status,
+                text: details.text,
+                tags: details.tags,
+                deletedFromListing: details.deletedFromListing,
+                hold: details.hold,
+                answerText: details.answerText,
+                answerStatus: details.answerStatus,
+                answerDateCreated: details.answerDateCreated,
+                fromId: details.fromId,
+                nickname: details.nickname,
+                registrationDate: details.registrationDate
+              }
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error_description || 'Erro ao buscar perguntas');
-            }
-            return response.json();
-        };
-
-        const questionsData = await fetchQuestions();
-        const questions = questionsData.questions;
-
-        // Função para processar um lote de perguntas
-        const processQuestionsBatch = async (batch) => {
-            await Promise.all(batch.map(async (question) => {
-                try {
-                    // Obter detalhes do usuário da pergunta
-                    const userResponse = await fetch(`https://api.mercadolibre.com/users/${question.from.id}`, {
-                        headers: { 'Authorization': `Bearer ${access_token}` },
-                        timeout: 5000
-                    });
-                    
-                    if (!userResponse.ok) throw new Error('Erro ao obter detalhes do usuário');
-
-                    const userData = await userResponse.json();
-                    const questionDetails = {
-                        questions_id: question.id,
-                        date_created: new Date(question.date_created),
-                        product_sku: question.item_id,
-                        user_mercado_id: question.seller_id,
-                        status: question.status,
-                        text: question.text,
-                        tags: question.tags,
-                        deleted_from_listing: question.deleted_from_listing,
-                        hold: question.hold,
-                        answer_text: question.answer?.text,
-                        answer_status: question.answer?.status,
-                        answer_date_created: question.answer?.date_created ? new Date(question.answer.date_created) : null,
-                        from_id: question.from.id,
-                        nickname: userData.nickname,
-                        registration_date: userData.registration_date ? new Date(userData.registration_date) : null
-                    };
-
-                    // Verificar se a pergunta já existe no banco de dados
-                    const existingQuestion = await pool.query(
-                        'SELECT * FROM questions_answers WHERE questions_id = $1 AND user_id = $2',
-                        [questionDetails.questions_id, userid]
-                    );
-
-                    if (existingQuestion.rows.length > 0) {
-                        // Atualizar pergunta existente
-                        const updateQuery = `
-                            UPDATE questions_answers SET
-                            date_created = $1,
-                            product_sku = $2,
-                            user_mercado_id = $3,
-                            status = $4,
-                            text = $5,
-                            tags = $6,
-                            deleted_from_listing = $7,
-                            hold = $8,
-                            answer_text = $9,
-                            answer_status = $10,
-                            answer_date_created = $11,
-                            from_id = $12,
-                            nickname = $13,
-                            registration_date = $14
-                            WHERE questions_id = $15 AND user_id = $16
-                        `;
-                        const updateValues = [
-                            questionDetails.date_created, questionDetails.product_sku, questionDetails.user_mercado_id,
-                            questionDetails.status, questionDetails.text, questionDetails.tags,
-                            questionDetails.deleted_from_listing, questionDetails.hold, questionDetails.answer_text,
-                            questionDetails.answer_status, questionDetails.answer_date_created, questionDetails.from_id,
-                            questionDetails.nickname, questionDetails.registration_date, questionDetails.questions_id, userid
-                        ];
-
-                        await pool.query(updateQuery, updateValues);
-                    } else {
-                        // Inserir nova pergunta
-                        const insertQuery = `
-                            INSERT INTO questions_answers (
-                                questions_id, date_created, product_sku, user_mercado_id,
-                                status, text, tags, deleted_from_listing, hold, answer_text,
-                                answer_status, answer_date_created, from_id, user_id,
-                                nickname, registration_date
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-                        `;
-                        const insertValues = [
-                            questionDetails.questions_id, questionDetails.date_created, questionDetails.product_sku,
-                            questionDetails.user_mercado_id, questionDetails.status, questionDetails.text,
-                            questionDetails.tags, questionDetails.deleted_from_listing, questionDetails.hold,
-                            questionDetails.answer_text, questionDetails.answer_status, questionDetails.answer_date_created,
-                            questionDetails.from_id, userid, questionDetails.nickname, questionDetails.registration_date
-                        ];
-
-                        await pool.query(insertQuery, insertValues);
-                    }
-
-                } catch (error) {
-                    console.error('Erro ao processar pergunta:', error);
-                }
-            }));
-        };
-
-        // Processar as perguntas em lotes para evitar sobrecarga
-        const batchSize = 5;
-        for (let i = 0; i < questions.length; i += batchSize) {
-            const batch = questions.slice(i, i + batchSize);
-            await processQuestionsBatch(batch);
+          } else {
+            await prisma.questionsAnswer.create({ data: details });
+          }
+        } catch (err) {
+          console.error('Erro ao processar pergunta:', err);
         }
-
-        res.status(200).json({ message: 'Perguntas e respostas sincronizadas com sucesso' });
-
-    } catch (error) {
-        console.error('Erro:', error);
-        res.status(500).json({ message: 'Erro ao processar a solicitação de Perguntas.', error: error.message });
+      }));
     }
-};
 
-export async function mercadoLivreGetQuestionsAnswersWithProducts (req, res) {
-    try {
-        
-        const userid = req.query.userId;
-        console.log('UserId recebido:', userid);
+    res.json({ message: 'Perguntas e respostas sincronizadas com sucesso' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao processar perguntas', error: err.message });
+  }
+}
 
-        // Consulta SQL
-        const query = `
-            SELECT 
-                q.text,
-                q.answer_date_created,
-                q.answer_text,
-                q.status AS question_status,
-                q.nickname,
-                q.registration_date,
-                p.product_sku,
-                p.title,
-                p.price,
-                p.available_quantity,
-                p.pictureUrls
-            FROM 
-                questions_answers q
-            JOIN 
-                productsMercado p
-            ON 
-                q.product_sku = p.product_sku
-            WHERE 
-                q.user_id = $1
-            ORDER BY 
-                q.answer_date_created;
-        `;
+// Busca perguntas com dados de produtos associados
+export async function mercadoLivreGetQuestionsAnswersWithProducts(req, res) {
+  try {
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ message: 'Usuário não autenticado.' });
 
-        // Executa a consulta
-        const result = await pool.query(query, [userid]);
+    const records = await prisma.questionsAnswer.findMany({
+      where: { userId },
+      include: {
+        product: {
+          select: {
+            productSku: true,
+            title: true,
+            price: true,
+            availableQuantity: true,
+            pictureUrls: true
+          }
+        }
+      },
+      orderBy: { answerDateCreated: 'asc' }
+    });
 
-        // Log do resultado para análise
-        console.log('Resultado da consulta:', result.rows);
-        // Retorna os resultados
-        res.status(200).json({ questions: result.rows });
-    } catch (error) {
-        console.error('Erro:', error);
-        res.status(500).json({ message: 'Erro ao recuperar as perguntas e respostas do banco de dados.' });
-    }
-};
+    const result = records.map(q => ({
+      text: q.text,
+      answerDateCreated: q.answerDateCreated,
+      answerText: q.answerText,
+      questionStatus: q.status,
+      nickname: q.nickname,
+      registrationDate: q.registrationDate,
+      product_sku: q.product.productSku,
+      title: q.product.title,
+      price: q.product.price,
+      availableQuantity: q.product.availableQuantity,
+      pictureUrls: q.product.pictureUrls
+    }));
+
+    res.json({ questions: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao recuperar perguntas', error: err.message });
+  }
+}

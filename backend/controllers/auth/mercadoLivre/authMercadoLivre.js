@@ -1,98 +1,84 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import pool from '../../../bd.js'
-import { getUserId } from '../../../utils/verifyToken.js'
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
+const clientId = process.env.CLIENT_ID
+const clientSecret = process.env.CLIENT_SECRET
+const redirectUri = process.env.REDIRECT_URI
 
-const clientId = process.env.CLIENT_ID;
-const clientSecret = process.env.CLIENT_SECRET;
-const redirectUri = process.env.REDIRECT_URI;
+// PASSO 1: redireciona para a autenticação do Mercado Livre
+export async function redirectToMercadoLivreAuth(req, res) {
+  try {
+    const encoded = encodeURIComponent(redirectUri)
+    const url = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encoded}`
+    res.redirect(url)
+  } catch (err) {
+    console.error('Erro na geração da URL ML:', err)
+    res.status(500).json({ message: 'Erro ao gerar URL de autenticação.' })
+  }
+}
 
-
-
-// PASSO 1
-export async function redirectToMercadoLivreAuth (req, res) {
-    try {
-        const encodedRedirectUri = encodeURIComponent(redirectUri);
-        const mercadoLivreAuthUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodedRedirectUri}`;
-
-        res.redirect(mercadoLivreAuthUrl);
-    } catch (error) {
-        console.error('Erro ao gerar URL de autenticação do Mercado Livre:', error);
-        res.status(500).json({ message: 'Erro ao gerar URL de autenticação do Mercado Livre.' });
+// PASSO 2: troca o code por tokens e armazena em userMercado
+export async function mercadoLivreAuth(req, res) {
+  try {
+    const { code, nome_loja: nomeMercado, userId } = req.body
+    const faltantes = []
+    if (!code) faltantes.push('code')
+    if (!nomeMercado) faltantes.push('nome_loja')
+    if (!userId) faltantes.push('userId')
+    if (faltantes.length) {
+      return res.status(400).json({
+        message: `Parâmetros ausentes: ${faltantes.join(', ')}`
+      })
     }
-};
 
+    // solicita o token
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      redirect_uri: redirectUri
+    })
 
-// PASSO 2
-export async function mercadoLivreAuth (req, res) {
-    try {
-        //recebendo code do front end
-        const { code, nome_loja: nome_mercado, userId: userid } = req.body;
+    const tokenRes = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params
+    })
+    if (!tokenRes.ok) {
+      const err = await tokenRes.json()
+      throw new Error(err.error_description || 'Falha ao obter token')
+    }
 
-        console.log(`'Code:' ${code} 'Nome Loja:' ${nome_mercado} 'User Id:' ${userid}`);
+    const { user_id: mercadoId, refresh_token, access_token } = await tokenRes.json()
 
-        if (!code || !nome_mercado || !userid) {
-            const missingParams = [];
-            if (!code) missingParams.push('code');
-            if (!nome_mercado) missingParams.push('nome_loja');
-            if (!userid) missingParams.push('userId');
-            return res.status(400).json({
-                message: `Parâmetros ausentes: ${missingParams.join(', ')}`,
-                received: { code, nome_mercado, userid }
-            });
-        }
+    // verifica existência
+    const existente = await prisma.userMercado.findUnique({ where: { userMercadoId: mercadoId } })
+    if (existente) {
+      return res.status(409).json({ message: 'Usuário já cadastrado.' })
+    }
 
-        //estou mandando a Body do Passo 1 após pegar o URL CODE TOKEN do cliente ao autenticar-se
-        const requestBodyPasso2 = `grant_type=authorization_code&client_id=${clientId}&client_secret=${clientSecret}&code=${code}&redirect_uri=${redirectUri}&code_verifier=$CODE_VERIFIER`;
+    // cria novo registro
+    await prisma.userMercado.create({
+      data: {
+        nomeMercado,
+        refreshToken: refresh_token,
+        accessToken: access_token,
+        userId: userId,
+        userMercadoId: mercadoId
+      }
+    })
 
-        const response = await fetch('https://api.mercadolibre.com/oauth/token', {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'content-type': 'application/x-www-form-urlencoded'
-            },
-            body: requestBodyPasso2
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json(); // Tenta extrair informações do corpo da resposta
-            let errorMessage = 'Erro na solicitação do token';
-            if (errorData && errorData.error_description) {
-                errorMessage = errorData.error_description; // Se houver uma mensagem de erro na resposta, usar ela
-            }
-            throw new Error(errorMessage);
-        }
-
-        const tokenData = await response.json();
-        const user_mercado_id = tokenData.user_id;
-        const refresh_token = tokenData.refresh_token;
-        const access_token = tokenData.access_token;
-
-        // Verificar se o user_mercado_id já existe na tabela usermercado
-        const { rowCount } = await pool.query(
-            'SELECT 1 FROM usermercado WHERE user_mercado_id = $1',
-            [user_mercado_id]
-        );
-
-        if (rowCount > 0) {
-            return res.status(409).json({ message: 'Usuário já existe.' });
-        }
-
-        await pool.query(
-            'INSERT INTO usermercado (nome_mercado, refresh_token, userid, access_token, user_mercado_id) VALUES ($1, $2, $3, $4, $5)',
-            [nome_mercado, refresh_token, userid, access_token, user_mercado_id]
-        );
-        
-        res.status(200).json({ message: 'Refresh token salvo com sucesso.' });
-    } catch (error) {
-        if (error.message.includes('Parâmetros ausentes')) {
-            console.error('Erro de parâmetros ausentes já tratado anteriormente.');
-        } else if (error.message.includes('Usuário já existe.')) {
-            res.status(409).json({ message: error.message });
-        } else {
-            res.status(500).json({ message: 'Erro interno. Tente novamente mais tarde.' });
-        }
-    } 
-};
+    res.status(200).json({ message: 'Credenciais ML salvas com sucesso.' })
+  } catch (err) {
+    console.error('Erro no fluxo ML Auth:', err)
+    if (err.message.includes('Usuário já cadastrado')) {
+      res.status(409).json({ message: err.message })
+    } else {
+      res.status(500).json({ message: 'Erro interno. Tente novamente mais tarde.' })
+    }
+  }
+}
