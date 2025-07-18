@@ -44,7 +44,6 @@ app.use(
       "Content-Type",
       "Accept"
     ],
-    exposedHeaders: ["Set-Cookie"],
   })
 );
 app.use(cookieParser());
