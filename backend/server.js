@@ -20,7 +20,8 @@ import shopeeRoutes from "./routes/shopee/shopeeRoutes.js";
 
 const allowedOrigins = [
   "https://erp-mkt-frontend.vercel.app",
-  "http://localhost:3000"
+  "https://leneoficial.com",
+  "http://localhost:3000",
 ];
 
 const app = express();
