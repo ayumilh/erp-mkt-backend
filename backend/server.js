@@ -64,7 +64,7 @@ app.use('/api/config', authenticate, configRoutes);
 //Shopee
 app.use('/api/shopee', shopeeRoutes);
 
-app.use('/api/auth', authRoutes);
+app.use('/api/userauth', authRoutes);
 
 const port = process.env.PORT || 4002
 // Inicialização do servidor
