@@ -6,11 +6,17 @@ dotenv.config()
 // ── MercadoLibre ────────────────────────────────────────────────────────────────
 export async function atualizarRefreshTokenMercadoLivre() {
   try {
+    console.debug('🔄 Iniciando atualização de tokens Mercado Livre…');
+
     const records = await prisma.userMercado.findMany({
       select: { user_mercado_id: true, refresh_token: true, access_token: true }
-    })
+    });
+    console.debug(`📑 Registros encontrados: ${records.length}`);
 
     for (const { user_mercado_id, refresh_token } of records) {
+      console.debug(`➡️ Processando user_mercado_id=${user_mercado_id}`);
+      console.debug('   → refresh_token atual:', refresh_token);
+
       const res = await fetch('https://api.mercadolibre.com/oauth/token', {
         method: 'POST',
         headers: {
@@ -23,15 +29,18 @@ export async function atualizarRefreshTokenMercadoLivre() {
           client_secret: process.env.CLIENT_SECRET,
           refresh_token,
         })
-      })
+      });
+
+      console.debug(`   ← status da resposta ML: ${res.status}`);
 
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error_description || 'Falha ao atualizar token ML')
+        const err = await res.json().catch(() => ({}));
+        console.debug('   ⚠️ Corpo de erro ML:', err);
+        throw new Error(err.error_description || 'Falha ao atualizar token ML');
       }
 
-      const { refresh_token: newRefresh, access_token: newAccess } =
-        await res.json()
+      const { refresh_token: newRefresh, access_token: newAccess } = await res.json();
+      console.debug('   🔄 Novos tokens recebidos:', { newRefresh, newAccess });
 
       await prisma.userMercado.update({
         where: { user_mercado_id },
@@ -39,7 +48,8 @@ export async function atualizarRefreshTokenMercadoLivre() {
           refresh_token: newRefresh,
           access_token:  newAccess
         }
-      })
+      });
+      console.debug(`   ✅ Prisma atualizado para ${user_mercado_id}`);
 
       console.log(
         'ML tokens updated for',
@@ -47,12 +57,15 @@ export async function atualizarRefreshTokenMercadoLivre() {
         '→',
         newRefresh,
         newAccess
-      )
+      );
     }
+
+    console.debug('🎉 Atualização de tokens Mercado Livre concluída.');
   } catch (e) {
-    console.error('Erro ML refresh:', e)
+    console.error('❌ Erro ML refresh:', e);
   }
 }
+
 
 // ── Magalu ──────────────────────────────────────────────────────────────────────
 export async function atualizarRefreshTokenMagalu() {

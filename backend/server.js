@@ -18,56 +18,87 @@ import magaluRoutes from "./routes/magalu/magaluRoutes.js";
 import statistics from "./routes/utils/statistics.js";
 import shopeeRoutes from "./routes/shopee/shopeeRoutes.js";
 
-const allowedOrigins = [
-  "https://erp-mkt-frontend.vercel.app",
-  "https://leneoficial.com",
-  "http://localhost:3000",
-];
-
 const app = express();
-
 app.set('trust proxy', 1);
 
+// Carrega origens permitidas do .env
+// EXEMPLO no .env:
+// ALLOWED_ORIGINS=https://erp-mkt-frontend.vercel.app,https://leneoficial.com,http://localhost:3000
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Sem origin (curl, Postman) ou origin na lista → permite  
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    console.warn(`Bloqueado por CORS: ${origin}`);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+    "Cookie"
+  ],
+};
+app.use(cors(corsOptions));
+// Habilita preflight para todas as rotas
+app.options("*", cors(corsOptions));
+
+// Segurança HTTP
 app.use(helmet({ contentSecurityPolicy: false }));
+
+// Rate limiter
 app.use(rateLimit);
+
+// Parsers
 app.use(bodyParser.json());
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-      else callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Origin",
-      "X-Requested-With",
-      "Content-Type",
-      "Accept"
-    ],
-  })
-);
 app.use(cookieParser());
 
+// Sessão (se precisar)
+app.use(
+  session({
+    name: "sessionId",
+    secret: process.env.SESSION_SECRET || "fallback_secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
+
+// Rotas de teste
 app.get("/", (req, res) => {
   res.send("Bem-vindo à página principal");
-}); // Rota de teste Tela Principal
+});
 
-//mercado
-app.use('/api/users', authenticate, usersRoutes);
-app.use('/api/stock', authenticate, stockRoutes);
-app.use('/api/mercadolivre', authenticate, mercadoLivreRoutes);
-app.use('/api/magalu', authenticate, magaluRoutes);
-app.use('/api/statistics', authenticate, statistics);
-app.use('/api/config', authenticate, configRoutes);
+// Rotas autenticadas
+app.use("/api/users", authenticate, usersRoutes);
+app.use("/api/stock", authenticate, stockRoutes);
+app.use("/api/mercadolivre", authenticate, mercadoLivreRoutes);
+app.use("/api/magalu", authenticate, magaluRoutes);
+app.use("/api/statistics", authenticate, statistics);
+app.use("/api/config", authenticate, configRoutes);
 
-//Shopee
-app.use('/api/shopee', shopeeRoutes);
+// Shopee sem auth
+app.use("/api/shopee", shopeeRoutes);
 
-app.use('/api/auth', authRoutes);
+// Auth
+app.use("/api/auth", authRoutes);
 
-const port = process.env.PORT || 4002
-// Inicialização do servidor
+const port = process.env.PORT || 4002;
 app.listen(port, "0.0.0.0", () => {
-  console.log(`Servidor com Socket.IO rodando na porta ${port}`);
+  console.log(`Servidor rodando na porta ${port}`);
 });
